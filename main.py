@@ -1,4 +1,4 @@
-import prompts
+from prompt import prompt_a as prompts
 from llm import LLM
 from results import print_summary
 from run import run_many

@@ -1,6 +1,7 @@
 """Runs players through a treatment's outline, one conversation per player.
 
 Dry run with no API calls:  python3 run.py 2A2P_4AR
+Choose a prompt version:   python3 run.py 2A2P_4AR prompt.prompt_a
 """
 import importlib
 import json
@@ -180,7 +181,7 @@ def run_many(run_name, treatment, llm, n_players, prompts, max_retries=3, worker
     outline = build_outline(treatment)
     problems = prompt_problems(prompts, outline)
     if problems:
-        raise ValueError(f"fix {prompts.__name__}.py first:\n  " + "\n  ".join(problems))
+        raise ValueError(f"fix prompt module {prompts.__name__} first:\n  " + "\n  ".join(problems))
 
     folder = os.path.join("results", run_name)
     os.makedirs(folder, exist_ok=True)
@@ -252,5 +253,5 @@ def dry_run(treatment, prompts):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit("usage: python3 run.py <treatment> [prompts_module]")
-    prompts_module = sys.argv[2] if len(sys.argv) > 2 else "prompts"
+    prompts_module = sys.argv[2] if len(sys.argv) > 2 else "prompt.prompt_a"
     dry_run(sys.argv[1], importlib.import_module(prompts_module))
