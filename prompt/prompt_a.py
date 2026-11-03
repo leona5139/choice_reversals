@@ -1,5 +1,7 @@
 """Prompt slots: paste each prompt between the quotes.
 
+Copy this file to a new filename for each version. Keep used versions unchanged.
+
 Placeholders like {round} are filled in at run time. Each slot lists the ones it can use:
     {round}, {computer_a}, {computer_b}   this round and the computer's tickets to A and B
     {group}                               "participant" or "computer", whichever holds the winning ticket
@@ -7,7 +9,7 @@ Placeholders like {round} are filled in at run time. Each slot lists the ones it
     {ticket}, {household}                 the winning ticket (1-20) and household ("A" or "B")
 """
 
-PROMPT_VERSION = "pilot"
+PROMPT_VERSION = __name__.rsplit(".", 1)[-1]
 
 # Optional; leave empty for no system message.
 # Adjacent strings join into one line, so end each piece with a space.
