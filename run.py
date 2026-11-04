@@ -23,7 +23,8 @@ ALLOWED_PLACEHOLDERS = {
     "ALLOCATION": ROUND_PLACEHOLDERS,
     "GROUP_REVEAL": ROUND_PLACEHOLDERS | {"group"},
     "REVISION": ROUND_PLACEHOLDERS | {"group", "choice_a", "choice_b"},
-    "OUTCOME": ROUND_PLACEHOLDERS | {"group", "ticket", "household"},
+    "OUTCOME_A": ROUND_PLACEHOLDERS | {"group", "ticket", "household"},
+    "OUTCOME_P": ROUND_PLACEHOLDERS | {"group", "ticket", "household"},
 }
 PLACEHOLDER_PATTERN = r"\{(\w+)\}"
 

@@ -44,8 +44,11 @@ REVISION = """Earlier in Round {round}, you assigned {choice_a} of your tickets 
 Review your earlier allocation. You may keep it or change it. Submit the allocation of your 10 tickets that you want to use for this round. To keep your earlier choice, submit the same numbers again."""
 
 # Placeholders: {round} {computer_a} {computer_b} {group} {ticket} {household}
-# TODO [OUTCOME FIDELITY] need to double check timing of OUTCOME prompt
-OUTCOME = """Round {round} is complete. The winning ticket is in the {group} set of tickets."""
+# Used after A and AR rounds: the winning ticket number is not revealed.
+OUTCOME_A = """Round {round} is complete. The winning ticket is in the {group} set of tickets."""
+
+# Used after P rounds: the winning ticket number is revealed.
+OUTCOME_P = """Round {round} is complete. The winning ticket is ticket {ticket}, in the {group} set of tickets."""
 
 # Added to the end of every ALLOCATION and REVISION prompt. Keep the keys "A" and "B".
 RESPONSE_FORMAT = (

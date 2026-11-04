@@ -26,9 +26,10 @@ def step(kind, round_number=None, slot=None, only_if_winner=None):
     return {"id": step_id, "kind": kind, "round": round_number, "slot": slot, "only_if_winner": only_if_winner}
 
 
-def outcome_steps(round_number):
+def outcome_steps(round_number, slot):
+    """OUTCOME_A (A and AR rounds) hides the winning ticket; OUTCOME_P (P rounds) reveals it."""
     if SHOW_OUTCOMES:
-        return [step("message", round_number, "OUTCOME")]
+        return [step("message", round_number, slot)]
     return []
 
 
@@ -37,7 +38,7 @@ def ex_ante_round(round_number):
         step("ask", round_number, "ALLOCATION"),
         step("draw", round_number),
         step("resolve", round_number),
-    ] + outcome_steps(round_number)
+    ] + outcome_steps(round_number, "OUTCOME_A")
 
 
 def ex_post_round(round_number):
@@ -46,7 +47,7 @@ def ex_post_round(round_number):
         step("message", round_number, "GROUP_REVEAL"),
         step("ask", round_number, "ALLOCATION", only_if_winner="participant"),
         step("resolve", round_number),
-    ] + outcome_steps(round_number)
+    ] + outcome_steps(round_number, "OUTCOME_P")
 
 
 def surprise_revision_rounds(round_numbers):
@@ -59,7 +60,7 @@ def surprise_revision_rounds(round_numbers):
             step("message", round_number, "GROUP_REVEAL"),
             step("ask", round_number, "REVISION", only_if_winner="participant"),
             step("resolve", round_number),
-        ] + outcome_steps(round_number)
+        ] + outcome_steps(round_number, "OUTCOME_A")
 
     return every_allocation_first + reveals_and_revisions
 
