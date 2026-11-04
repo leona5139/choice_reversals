@@ -4,13 +4,19 @@ from results import print_summary
 from run import run_many
 from treatments import TREATMENTS
 
-RUN_NAME = "pilot_1"
-PLAYERS_PER_TREATMENT = 3
+RUN_NAME = "test"
+PLAYERS_PER_TREATMENT = 2
 
-llm = LLM("openrouter", "<provider/model-id>")
-# llm = LLM("gemini", "<gemini-model-id>", temperature=1)
+# llm = LLM("openrouter", "<provider/model-id>")
 
-for treatment in TREATMENTS:
-    run_many(RUN_NAME, treatment, llm, PLAYERS_PER_TREATMENT, prompts)
+
+LLMs = [
+    # LLM("gemini", "gemini-3.8-flash", temperature=1),
+    LLM("openrouter", "recursive/flint-v1.0:free", temperature=1),
+]
+
+for llm in LLMs:
+    for treatment in TREATMENTS:
+        run_many(RUN_NAME, treatment, llm, PLAYERS_PER_TREATMENT, prompts)
 
 print_summary(RUN_NAME)
