@@ -194,34 +194,44 @@ FIG3_FIELDS = ("panel", "category", "consistency", "count", "percent",
                "n_players", "n_respondents", "n_choices")
 
 
-def figure_3(rows, folder):
-    """Paper Figure 3: rounds 5–8 of 4A_4AR, original choices, final choices, and revisions only."""
-    selected = [r for r in rows if r["treatment"] == "4A_4AR" and r["round"] >= 5]
+def figure_3(rows, folder, by_model=False):
+    """Original and final choices in rounds 5–8 of 4A_4AR."""
+    selected = [r for r in rows if r["treatment"] == "4A_4AR" and 5 <= r["round"] <= 8]
+    by = ("model", "temperature") if by_model else ()
+    groups = group_rows(selected, by) if by else {(): selected}
     table = []
-    panels = {}
-    for key, field, _title in FIG3_PANELS:
-        source = [r for r in selected if r["changed"] is True] if key == "changes" else selected
-        panels[key] = marginal_distribution(source, field)
-        table.extend({"panel": key, **record} for record in panels[key])
-    files = [write_csv(folder / "03_fig3_revisions.csv", table, FIG3_FIELDS)]
-    png = folder / "03_fig3_revisions.png"
+    for setup, group in groups.items():
+        for panel, field, _title in FIG3_PANELS:
+            source = [r for r in group if r["changed"] is True] if panel == "changes" else group
+            table.extend({**dict(zip(by, setup)), "panel": panel, **record}
+                         for record in marginal_distribution(source, field))
+    stem = "05_fig3_by_model" if by_model else "03_fig3_revisions"
+    files = [write_csv(folder / f"{stem}.csv", table, (*by, *FIG3_FIELDS))]
+    png = folder / f"{stem}.png"
     if not selected:
         png.unlink(missing_ok=True)
         print("Figure 3: no rounds 5–8 for 4A_4AR.")
         return files
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.6), squeeze=False)
-    fig.suptitle("Figure 3: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
-    for col, (key, _field, title) in enumerate(FIG3_PANELS):
-        records = panels[key]
-        n = records[0]["n_choices"] if records else 0
-        draw_panel(axes[0, col], records, f"{title}\n{n} choices", levels)
+    fig, axes = plt.subplots(len(groups), 3, figsize=(15, 4.6 * len(groups)), squeeze=False)
+    heading = "Figure 3 by model and temperature" if by_model else "Figure 3"
+    fig.suptitle(f"{heading}: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
+    for row, (setup, group) in enumerate(group_rows(table, by).items()):
+        for col, (panel, _field, title) in enumerate(FIG3_PANELS):
+            records = [r for r in group if r["panel"] == panel]
+            if by_model:
+                title = f"{setup[0]} | t={setup[1]}\n{title}"
+            draw_panel(axes[row, col], records, f"{title}\n{records[0]['n_choices']} choices", levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within the panel", loc="lower center", ncol=4)
-    fig.tight_layout(rect=(0, 0.14, 1, 0.92))
+    fig.tight_layout(rect=(0, 0.14 / len(groups), 1, 1 - 0.08 / len(groups)))
     fig.savefig(png, dpi=160)
     plt.close(fig)
     return files + [png]
+
+
+def figure_3_by_model(rows, folder):
+    return figure_3(rows, folder, by_model=True)
 
 
 def figure_2(rows, folder):

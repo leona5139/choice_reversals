@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 import subprocess
 
-from analysis.analyses import figure_1, figure_1_by_model, figure_2, figure_3, overview
+from analysis.analyses import figure_1, figure_1_by_model, figure_2, figure_3, figure_3_by_model, overview
 from analysis.utils import round_rows, write_csv
 
-ANALYSES = {0: overview, 1: figure_1, 2: figure_2, 3: figure_3, 4: figure_1_by_model}
+ANALYSES = {0: overview, 1: figure_1, 2: figure_2, 3: figure_3, 4: figure_1_by_model, 5: figure_3_by_model}
 
 
 def run_analysis(players, analysis_id, metadata=None, analysis_order=None):
