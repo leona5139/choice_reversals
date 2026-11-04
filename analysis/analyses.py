@@ -1,6 +1,5 @@
 """Overview and the initial-choice comparisons in Figures 1 and 2."""
 from collections import Counter
-from textwrap import fill
 
 import matplotlib
 
@@ -11,8 +10,9 @@ from matplotlib.patches import Patch
 from analysis.utils import CATEGORIES, SETUP_FIELDS, group_rows, player_key, write_csv
 from treatments import tasks_in
 
-LABELS = ["Over-\ncompensating", "Ex ante\nequalizing", "Mixed", "Ex post\nequalizing", "Reinforcing"]
-CHOICE_FIELDS = (*SETUP_FIELDS, "treatment", "period", "category", "consistency",
+# Every label is two lines so a short name stays on the first line, beside its neighbors.
+LABELS = ["Over-\ncompensating", "Ex ante\nequalizing", "Mixed\n", "Ex post\nequalizing", "Reinforcing\n"]
+CHOICE_FIELDS = ("treatment", "period", "category", "consistency",
                  "count", "percent", "n_players", "n_respondents", "n_choices")
 
 
@@ -46,8 +46,9 @@ def overview(rows, folder):
 
 
 def choice_distribution(rows, with_consistency=False):
+    """Pools every provider, model, temperature, and prompt version."""
     table = []
-    fields = (*SETUP_FIELDS, "treatment", "period")
+    fields = ("treatment", "period")
     for key, group in group_rows(rows, fields).items():
         choices = [r for r in group if r["initial_a"] is not None]
         per_player = {}
@@ -78,7 +79,10 @@ def choice_distribution(rows, with_consistency=False):
 
 def draw_panel(ax, records, title, levels=None, frame="A"):
     ax.set_title(title, fontsize=10)
-    ax.set_xticks(range(5), LABELS, fontsize=8)
+    ax.set_xticks(range(5))
+    ax.set_xticklabels(LABELS, fontsize=7.5)
+    for label in ax.get_xticklabels():
+        label.set_verticalalignment("top")
     ax.set_ylim(0, 100)
     ax.set_ylabel("Choices (%)", fontsize=9)
     ax.set_axisbelow(True)
@@ -108,19 +112,17 @@ def figure_1(rows, folder):
         png.unlink(missing_ok=True)
         print("Figure 1: no data for 4A_4AR or 4P_4AR.")
         return files
-    setups = group_rows(table, SETUP_FIELDS)
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
-    fig, axes = plt.subplots(len(setups), 2, figsize=(11, 4.2 * len(setups)), squeeze=False)
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), squeeze=False)
     fig.suptitle("Figure 1: Initial choices in rounds 1–4", fontsize=14)
-    for index, (setup, group) in enumerate(setups.items()):
-        for col, treatment in enumerate(treatments):
-            records = [r for r in group if r["treatment"] == treatment]
-            n = records[0]["n_choices"] if records else 0
-            title = f"{treatment} | {n} choices\n{fill(setup_label(setup), 65)}"
-            draw_panel(axes[index, col], records, title, levels, frame="A" if col == 0 else "P")
+    for col, treatment in enumerate(treatments):
+        records = [r for r in table if r["treatment"] == treatment]
+        n = records[0]["n_choices"] if records else 0
+        title = f"{treatment} | {n} choices"
+        draw_panel(axes[0, col], records, title, levels, frame="A" if col == 0 else "P")
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within rounds 1–4", loc="lower center", ncol=4)
-    fig.tight_layout(rect=(0, 0.12 / len(setups), 1, 1 - 0.10 / len(setups)))
+    fig.tight_layout(rect=(0, 0.14, 1, 0.92))
     fig.savefig(png, dpi=160)
     plt.close(fig)
     return files + [png]
@@ -137,20 +139,16 @@ def figure_2(rows, folder):
         png.unlink(missing_ok=True)
         print("Figure 2: no data for the four main treatments.")
         return files
-    setups = group_rows(table, SETUP_FIELDS)
-    fig, axes = plt.subplots(4 * len(setups), 3, figsize=(13, 11 * len(setups)), squeeze=False)
+    fig, axes = plt.subplots(4, 3, figsize=(15, 12), squeeze=False)
     fig.suptitle("Figure 2: Initial choices across treatment sequences", fontsize=14)
-    for index, (setup, group) in enumerate(setups.items()):
-        for row, treatment in enumerate(treatments):
-            for col, period in enumerate(periods):
-                records = [r for r in group if r["treatment"] == treatment and r["period"] == period]
-                n = records[0]["n_choices"] if records else 0
-                frame = "P" if tasks_in(treatment)[int(period[0]) - 1] == "P" else "A"
-                title = f"{treatment} | rounds {period} | {frame}\n{n} choices"
-                if row == 0:
-                    title = fill(setup_label(setup), 47) + "\n" + title
-                draw_panel(axes[index * 4 + row, col], records, title, frame=frame)
-    fig.tight_layout(rect=(0, 0, 1, 1 - 0.05 / len(setups)))
+    for row, treatment in enumerate(treatments):
+        for col, period in enumerate(periods):
+            records = [r for r in table if r["treatment"] == treatment and r["period"] == period]
+            n = records[0]["n_choices"] if records else 0
+            frame = "P" if tasks_in(treatment)[int(period[0]) - 1] == "P" else "A"
+            title = f"{treatment} | rounds {period} | {frame}\n{n} choices"
+            draw_panel(axes[row, col], records, title, frame=frame)
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
     fig.savefig(png, dpi=160)
     plt.close(fig)
     return files + [png]
