@@ -1,4 +1,4 @@
-"""Each run is saved to results/<run_name>/:
+"""Each run is saved to output/results/<run_name>/:
     players.jsonl              one finished player per line
     requests.jsonl             every API attempt, including invalid replies
     outline_<treatment>.json   the outline each treatment followed
@@ -10,6 +10,7 @@ import threading
 from analysis.utils import classify_allocation
 
 EVEN_SPLIT = {"A": 5, "B": 5}
+RESULTS_ROOT = os.path.join("output", "results")
 
 file_lock = threading.Lock()
 
@@ -21,7 +22,7 @@ def append_jsonl(path, record):
 
 
 def load_players(run_name):
-    path = os.path.join("results", run_name, "players.jsonl")
+    path = os.path.join(RESULTS_ROOT, run_name, "players.jsonl")
     if not os.path.exists(path):
         return []
     with open(path) as f:

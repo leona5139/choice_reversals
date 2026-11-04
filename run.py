@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import game
 from parse import ask_with_retry
-from results import append_jsonl, load_players
+from results import RESULTS_ROOT, append_jsonl, load_players
 from treatments import build_outline, describe, tasks_in
 
 ROUND_PLACEHOLDERS = {"round", "computer_a", "computer_b"}
@@ -184,7 +184,7 @@ def run_many(run_name, treatment, llm, n_players, prompts, max_retries=3, worker
     if problems:
         raise ValueError(f"fix prompt module {prompts.__name__} first:\n  " + "\n  ".join(problems))
 
-    folder = os.path.join("results", run_name)
+    folder = os.path.join(RESULTS_ROOT, run_name)
     os.makedirs(folder, exist_ok=True)
     with open(os.path.join(folder, f"outline_{treatment}.json"), "w") as f:
         json.dump(outline, f, indent=2)
