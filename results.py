@@ -7,6 +7,8 @@ import json
 import os
 import threading
 
+from analysis.utils import classify_allocation
+
 EVEN_SPLIT = {"A": 5, "B": 5}
 
 file_lock = threading.Lock()
@@ -27,7 +29,7 @@ def load_players(run_name):
 
 
 def is_ex_ante_equalizing(this_round):
-    return this_round["initial"]["A"] == 10 - this_round["computer"]["A"]
+    return classify_allocation(this_round["computer"]["A"], this_round["initial"]["A"]) == "ex_ante_equalizing"
 
 
 def group_by_setup(players):
