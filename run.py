@@ -201,9 +201,10 @@ def run_many(run_name, treatment, llm, n_players, prompts, max_retries=3, worker
 
     def run_one(player_number):
         this_id = player_id(player_number)
+        player_setup = {**setup, "run_name": run_name, "player_number": player_number}
 
         def log_request(attempt):
-            append_jsonl(os.path.join(folder, "requests.jsonl"), {"player_id": this_id, **setup, **attempt})
+            append_jsonl(os.path.join(folder, "requests.jsonl"), {"player_id": this_id, **player_setup, **attempt})
 
         def get_answer(messages):
             return ask_with_retry(llm, messages, max_retries, log_request)
@@ -214,7 +215,7 @@ def run_many(run_name, treatment, llm, n_players, prompts, max_retries=3, worker
             progress.write(f"{this_id} failed and will rerun next time: {error}")
             return
 
-        append_jsonl(os.path.join(folder, "players.jsonl"), {"player_id": this_id, **setup, **record})
+        append_jsonl(os.path.join(folder, "players.jsonl"), {"player_id": this_id, **player_setup, **record})
         progress.update(1)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
