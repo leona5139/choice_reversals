@@ -5,7 +5,7 @@ from run import run_many
 from treatments import TREATMENTS
 
 RUN_NAME = "test"
-PLAYERS_PER_TREATMENT = 2
+PLAYERS_PER_TREATMENT = 5
 
 # llm = LLM("openrouter", "<provider/model-id>")
 
