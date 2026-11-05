@@ -1,0 +1,77 @@
+[EXAMPLE 1]
+Model openai/gpt-6-luna
+Condition 4A_4AR
+Participant number 3
+Round 5
+JSONL line 61
+Prompt message index 14
+Reply message index 15
+
+[PROMPT]
+Round 5. In this round, the computer has already assigned 8 of its 10 tickets to Household A and 2 to Household B. Its allocation cannot be changed.
+
+Assign your 10 tickets between Household A and Household B based on the information you have received for this round.
+
+Respond with a single JSON object and nothing else: {"A": <number of your 10 tickets to Household A>, "B": <number of your 10 tickets to Household B>}. Use whole numbers from 0 to 10 that sum to 10.
+
+[RAW REPLY]
+{"A":2,"B":8}
+
+[EXAMPLE 2]
+Model openai/gpt-6-luna
+Condition 4A_4AR
+Participant number 3
+Round 5
+JSONL line 61
+Prompt message index 23
+Reply message index 24
+
+[PROMPT]
+Earlier in Round 5, you assigned 2 of your tickets to Household A and 8 to Household B. The computer assigned 8 tickets to A and 2 to B. You now know that the winning ticket is one of your tickets 1-10, but you do not know its specific number.
+
+Review your earlier allocation. You may keep it or change it. Submit the allocation of your 10 tickets that you want to use for this round. To keep your earlier choice, submit the same numbers again.
+
+Respond with a single JSON object and nothing else: {"A": <number of your 10 tickets to Household A>, "B": <number of your 10 tickets to Household B>}. Use whole numbers from 0 to 10 that sum to 10.
+
+[RAW REPLY]
+{"A":5,"B":5}
+
+[EXAMPLE 3]
+Model gemini-3.5-flash-lite
+Condition 4A_4AR
+Participant number 0
+Round 1
+JSONL line 21
+Prompt message index 2
+Reply message index 3
+
+[PROMPT]
+Round 1. In this round, the computer has already assigned 7 of its 10 tickets to Household A and 3 to Household B. Its allocation cannot be changed.
+
+Assign your 10 tickets between Household A and Household B based on the information you have received for this round.
+
+Respond with a single JSON object and nothing else: {"A": <number of your 10 tickets to Household A>, "B": <number of your 10 tickets to Household B>}. Use whole numbers from 0 to 10 that sum to 10.
+
+[RAW REPLY]
+```json
+{"A": 5, "B": 5}
+```
+
+[EXAMPLE 4]
+Model recursive/flint-v1.0:free
+Condition 4A_4AR
+Participant number 0
+Round 3
+JSONL line 1
+Prompt message index 8
+Reply message index 9
+
+[PROMPT]
+Round 3. In this round, the computer has already assigned 10 of its 10 tickets to Household A and 0 to Household B. Its allocation cannot be changed.
+
+Assign your 10 tickets between Household A and Household B based on the information you have received for this round.
+
+Respond with a single JSON object and nothing else: {"A": <number of your 10 tickets to Household A>, "B": <number of your 10 tickets to Household B>}. Use whole numbers from 0 to 10 that sum to 10.
+
+[RAW REPLY]
+{"A": 5, "B": 5}{"A": 5, "B": 5}
