@@ -1,0 +1,139 @@
+
+% Single paper style: 12 pt Pagella with generous line spacing.
+\documentclass[12pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+
+% Prefer newpx mathematics when installed; support a minimal TeX Live too.
+\IfFileExists{newpxmath.sty}{
+  \usepackage{tgpagella,newpxmath}
+}{
+  \usepackage{mathpazo}
+  \usepackage{tgpagella}
+}
+\usepackage{setspace}
+\usepackage{graphicx,booktabs}
+\usepackage{listings}
+\usepackage{enumitem}
+
+% Pandoc's tight-list marker uses the list spacing configured below.
+\providecommand{\tightlist}{}
+\usepackage[authoryear,round]{natbib}
+\renewcommand{\bibfont}{\setstretch{1.25}}
+\setlength{\bibsep}{10pt}
+\usepackage{xcolor}
+\definecolor{citationcolor}{HTML}{830000}
+\usepackage{hyperref}
+\setstretch{1.25}
+\hypersetup{colorlinks=true,citecolor=citationcolor,linkcolor=citationcolor,urlcolor=black}
+% Main-text footnote links share the citation color.
+\AddToHook{cmd/@footnotemark/before}{\begingroup\hypersetup{linkcolor=citationcolor}}
+\AddToHook{cmd/@footnotemark/after}{\endgroup}
+% Extra vertical separation between footnote entries.
+\addtolength{\footnotesep}{6pt}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+% Offset the paragraph skip that LaTeX adds to the space around lists.
+\setlist[itemize,enumerate]{topsep=\dimexpr4pt-\parskip\relax,partopsep=0pt,parsep=0pt,itemsep=6pt}
+% A bold opening at the start of a paragraph is a flush-left run-in heading.
+\AddToHook{cmd/textbf/before}{\ifvmode\noindent\fi}
+\setlength{\emergencystretch}{1em}
+\pagestyle{plain}
+
+% Local build from docs/writeups; on Overleaf upload this file and the assets folder.
+\graphicspath{{assets/}{../assets/}}
+
+\newcommand{\papertitle}{Group 4 - Milestone 1}
+\newcommand{\paperauthor}{Ishan Shivansh Bangroo\quad Zhi-hong Jian\quad Tara Liu\quad Leona Pierce}
+\title{\papertitle}
+\author{\paperauthor}
+\date{}
+\hypersetup{pdftitle={\papertitle}}
+
+\newcommand{\comparison}[3]{%
+  \begingroup\centering\small\setlength{\parskip}{3pt}
+  \textbf{Human experiment} (\href{https://doi.org/10.1086/705549}{Andreoni et al., 2020, fig.~#3})\par
+  \includegraphics[width=.94\linewidth]{#1}\par
+  \medskip\textbf{LLM pilot}\par
+  \includegraphics[width=.94\linewidth]{#2}\par
+  \endgroup}
+
+\begin{document}
+\maketitle
+
+\noindent Please find the working repo here: \url{https://github.com/leona5139/choice_reversals}
+
+\section{Pilot design}
+We replicate the four treatments in Table 2 of Andreoni et al. (2020) and the instructions in Appendix C. Each player completes eight rounds and assigns ten tickets between two households for a \$10 donation, given the predefined computer's allocation for each round.
+
+In this pilot experiment on LLMs, we ran five players per model in each treatment at temperature 1.0. The \href{https://github.com/leona5139/choice_reversals/blob/main/output/results/pilot_1/players.jsonl}{\underline{full player data}} cover 80 players. We used Recursive Flint (for free) and GPT-Luna-6.1 (for about \$0.02) through the OpenRouter API. We ran Gemini 3.1 Flash-Lite and Gemini 3.5 Flash-Lite (for free) through the Gemini API.
+
+\section{Prompts and task sequence}
+We use one fixed set of high-level prompts for all four treatments (\hyperref[app:prompts]{Appendix~\ref*{app:prompts}}). The sequence of messages may differe across treatment, see below. Each player starts a fresh message thread. Before each API call, we add the information revealed so far and the current question. We send the full thread and append the reply with \verb|"role": "assistant"| (see the \href{https://github.com/leona5139/choice_reversals/tree/main/docs/assets/player_data_example}{\underline{player data examples}}).
+
+We asked each model to return its allocation as a JSON object. We parsed the text the models returned and found no formatting errors.
+
+\noindent\begin{minipage}{\linewidth}
+Each of the four main treatments has a different sequence of the three tasks below.
+\begin{itemize}
+    \item \textbf{A.} The player allocates ten tickets. We then draw the winning ticket and reveal which group holds it.
+    \item \textbf{P.} We draw the ticket and reveal its winning group first. The player allocates if their group wins. We then reveal the ticket number.
+    \item \textbf{$\mathrm{A}^{R}$.} The player submits all four allocations before any group is revealed. We then reveal the group one round at a time. When the player's group wins, they can keep or change that round's allocation.
+\end{itemize}
+\end{minipage}
+
+All four treatments end with four $\mathrm{A}^{R}$ rounds. Rounds 1--4 are all A (\texttt{4A\_4AR}), all P (\texttt{4P\_4AR}), two A followed by two P (\texttt{2A2P\_4AR}), or two P followed by two A (\texttt{2P2A\_4AR}).
+
+\section{Finding}
+
+\autoref{fig:initial-choices} compares human and LLM choices in rounds 1--4. In the ex ante frame, players allocate before the draw. In the ex post frame, they allocate after learning their group won.
+\begin{itemize}
+    \item Even in the ex ante frame, models chose the 5/5 split in 39 of 80 choices (49\%), compared with about 8\% for humans.
+    \item Choices varied by model (\autoref{fig:initial-choices-by-model}). GPT-Luna-6.1 chose the ex ante equalizing allocation in all 20 choices in the ex ante frame and 9 of 10 in the ex post frame. Gemini 3.5 Flash-Lite is particularly unresponsive to the computer's allocation and sticks to 5/5.
+\end{itemize}
+
+In rounds 5--8 of the treatment that starts with four ex ante rounds, only GPT-Luna-6.1 revised. It switched from the ex ante equalizing allocation to 5/5 in 9 of its 10 revision opportunities (\autoref{fig:revisions} and \autoref{fig:revisions-by-model}).
+
+\begin{figure}[p]
+  \comparison{human-fig1.png}{01_fig1_choices.png}{1}
+  \caption{Allocations in A and P tasks, rounds 1--4.}
+  \label{fig:initial-choices}
+\end{figure}
+
+\begin{figure}[p]
+  \comparison{human-fig3.png}{03_fig3_revisions.png}{3}
+  \caption{Initial and final allocations in 4A\_4AR, rounds 5--8.}
+  \label{fig:revisions}
+\end{figure}
+
+\clearpage
+\appendix
+\section{Pilot results by model}
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\linewidth,height=.80\textheight,keepaspectratio]{04_fig1_by_model.png}
+  \caption{Initial allocations in A and P tasks by model.}
+  \label{fig:initial-choices-by-model}
+\end{figure}
+
+\clearpage
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\linewidth,height=.85\textheight,keepaspectratio]{05_fig3_by_model.png}
+  \caption{Initial and final allocations in 4A\_4AR by model, rounds 5--8.}
+  \label{fig:revisions-by-model}
+\end{figure}
+
+\clearpage
+\section{Pilot prompt}
+\label{app:prompts}
+\begingroup
+\singlespacing
+\lstset{basicstyle=\fontsize{9}{10.5}\selectfont\ttfamily,columns=fullflexible,
+        breaklines=true,breakatwhitespace=true,breakindent=1em,showstringspaces=false,keepspaces=true,upquote=true}
+\IfFileExists{assets/pilot-prompts.txt}
+  {\lstinputlisting{assets/pilot-prompts.txt}}
+  {\lstinputlisting{../assets/pilot-prompts.txt}}
+\endgroup
+\end{document}

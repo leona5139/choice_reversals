@@ -1,7 +1,8 @@
 """Runs players through a treatment's outline, one conversation per player.
 
-Dry run with no API calls:  python3 run.py 2A2P_4AR
-Choose a prompt version:   python3 run.py 2A2P_4AR prompt.prompt_a
+Preview a treatment with the default prompt or specify a prompt module.
+    uv run python -m simulation.run 2A2P_4AR
+    uv run python -m simulation.run 2A2P_4AR prompt.prompt_a
 """
 import importlib
 import json
@@ -12,10 +13,10 @@ import sys
 import zlib
 from concurrent.futures import ThreadPoolExecutor
 
-import game
-from parse import ask_with_retry
-from results import RESULTS_ROOT, append_jsonl, load_players
-from treatments import build_outline, describe, tasks_in
+from simulation import game
+from simulation.parse import ask_with_retry
+from simulation.results import RESULTS_ROOT, append_jsonl, load_players
+from simulation.treatments import build_outline, describe, tasks_in
 
 ROUND_PLACEHOLDERS = {"round", "computer_a", "computer_b"}
 ALLOWED_PLACEHOLDERS = {
@@ -254,6 +255,6 @@ def dry_run(treatment, prompts):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        sys.exit("usage: python3 run.py <treatment> [prompts_module]")
+        sys.exit("usage: uv run python -m simulation.run <treatment> [prompts_module]")
     prompts_module = sys.argv[2] if len(sys.argv) > 2 else "prompt.prompt_a"
     dry_run(sys.argv[1], importlib.import_module(prompts_module))

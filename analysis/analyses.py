@@ -5,11 +5,13 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
+from matplotlib.patches import Patch, Rectangle
+from matplotlib.ticker import FuncFormatter, MultipleLocator
 
 from analysis.utils import CATEGORIES, SETUP_FIELDS, group_rows, player_key, write_csv
-from treatments import tasks_in
+from simulation.treatments import tasks_in
 
+FIGURE_DPI = 320
 # Every label is two lines so a short name stays on the first line, beside its neighbors.
 LABELS = ["Over-\ncompensating", "Ex ante\nequalizing", "Mixed\n", "Ex post\nequalizing", "Reinforcing\n"]
 CHOICE_FIELDS = ("treatment", "period", "category", "consistency",
@@ -78,9 +80,9 @@ def choice_distribution(rows, with_consistency=False, by=()):
 
 
 def draw_panel(ax, records, title, levels=None, frame="A"):
-    ax.set_title(title, fontsize=10)
+    ax.set_title(title, fontsize=11)
     ax.set_xticks(range(5))
-    ax.set_xticklabels(LABELS, fontsize=7.5)
+    ax.set_xticklabels(LABELS, fontsize=9)
     for label in ax.get_xticklabels():
         label.set_verticalalignment("top")
     ax.set_ylim(0, 100)
@@ -104,6 +106,38 @@ def draw_panel(ax, records, title, levels=None, frame="A"):
 FIG1_TREATMENTS = ("4A_4AR", "4P_4AR")
 
 
+def save_paper_figure(png, panels, figsize, top, legend_position):
+    """Use the panel layout and frequency scale of the published figures."""
+    levels = sorted({0.25, 0.5, 0.75, 1.0} | {
+        r["consistency"] for _, records in panels for r in records if r["consistency"] is not None
+    })
+    handles = [Patch(color=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:g}") for level in levels]
+    labels = [category.replace("_", " ").title() for category in CATEGORIES]
+    font = 12 if len(panels) == 2 else 14
+    fig, axes = plt.subplots(1, len(panels), figsize=figsize, sharey=True)
+    fig.subplots_adjust(left=0.07 if len(panels) == 2 else 0.06, right=0.992,
+                        bottom=0.34, top=0.92, wspace=0.025)
+    for ax, (title, records) in zip(axes, panels):
+        draw_panel(ax, records, "", levels[::-1])
+        ax.grid(False)
+        ax.set_ylabel("")
+        ax.set_xticks(range(len(labels)), labels, rotation=-90, fontsize=font)
+        ax.tick_params(axis="y", labelsize=font)
+        ax.add_patch(Rectangle((0, 1), 1, 0.11, transform=ax.transAxes, clip_on=False,
+                               facecolor="0.81", edgecolor="black"))
+        ax.text(0.5, 1.055, title, ha="center", va="center", transform=ax.transAxes, fontsize=font)
+        ax.legend(handles=handles, title="Consistency", loc=legend_position, frameon=False,
+                  fontsize=font - 1, title_fontsize=font, labelspacing=0.15, handlelength=1)
+    highest_bar = max(ax.dataLim.ymax for ax in axes)
+    axes[0].set_ylim(0, max(top, highest_bar * 1.05))
+    axes[0].yaxis.set_major_locator(MultipleLocator(20))
+    axes[0].yaxis.set_major_formatter(FuncFormatter(lambda percent, _: f"{percent / 100:.1f}"))
+    axes[0].set_ylabel("Frequency", fontsize=font)
+    fig.supxlabel("Choice category", y=0.015, fontsize=font)
+    fig.savefig(png, dpi=FIGURE_DPI)
+    plt.close(fig)
+
+
 def figure_1_choices(rows, by=()):
     selected = [{**r, "period": "1-4"} for r in rows
                 if r["treatment"] in FIG1_TREATMENTS and r["round"] <= 4]
@@ -111,24 +145,27 @@ def figure_1_choices(rows, by=()):
 
 
 def save_figure_1(table, png, suptitle, by=()):
-    """One row per group in `by`. With by empty, a single pooled row."""
+    if not by:
+        panels = [(title, [r for r in table if r["treatment"] == treatment])
+                  for title, treatment in zip(("Panel A: Ex Ante Frame", "Panel B: Ex Post Frame"), FIG1_TREATMENTS)]
+        save_paper_figure(png, panels, (11, 6.4), 67, "upper right")
+        return
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
-    groups = group_rows(table, by) if by else {(): table}
-    fig, axes = plt.subplots(len(groups), 2, figsize=(11, 4.2 * len(groups)), squeeze=False)
+    groups = group_rows(table, by)
+    fig, axes = plt.subplots(len(groups), 2, figsize=(11, 2.8 * len(groups)), squeeze=False)
     fig.suptitle(suptitle, fontsize=14)
     for index, (key, group) in enumerate(groups.items()):
         for col, treatment in enumerate(FIG1_TREATMENTS):
             records = [r for r in group if r["treatment"] == treatment]
             n = records[0]["n_choices"] if records else 0
             title = f"{treatment} | {n} choices"
-            if by:
-                model, temperature = key
-                title = f"{model} | t={temperature}\n{title}"
+            model, temperature = key
+            title = f"{model} | t={temperature}\n{title}"
             draw_panel(axes[index, col], records, title, levels, frame="A" if col == 0 else "P")
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within rounds 1–4", loc="lower center", ncol=4)
     fig.tight_layout(rect=(0, 0.14 / len(groups), 1, 1 - 0.08 / len(groups)))
-    fig.savefig(png, dpi=160)
+    fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
 
 
@@ -212,20 +249,22 @@ def figure_3(rows, folder, by_model=False):
         png.unlink(missing_ok=True)
         print("Figure 3: no rounds 5–8 for 4A_4AR.")
         return files
+    if not by_model:
+        panels = [(title, [r for r in table if r["panel"] == panel]) for panel, _, title in FIG3_PANELS]
+        save_paper_figure(png, panels, (15, 7.5), 86, "upper left")
+        return files + [png]
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
-    fig, axes = plt.subplots(len(groups), 3, figsize=(15, 4.6 * len(groups)), squeeze=False)
-    heading = "Figure 3 by model and temperature" if by_model else "Figure 3"
-    fig.suptitle(f"{heading}: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
+    fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False)
+    fig.suptitle("Figure 3 by model and temperature: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
     for row, (setup, group) in enumerate(group_rows(table, by).items()):
         for col, (panel, _field, title) in enumerate(FIG3_PANELS):
             records = [r for r in group if r["panel"] == panel]
-            if by_model:
-                title = f"{setup[0]} | t={setup[1]}\n{title}"
+            title = f"{setup[0]} | t={setup[1]}\n{title}"
             draw_panel(axes[row, col], records, f"{title}\n{records[0]['n_choices']} choices", levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within the panel", loc="lower center", ncol=4)
     fig.tight_layout(rect=(0, 0.14 / len(groups), 1, 1 - 0.08 / len(groups)))
-    fig.savefig(png, dpi=160)
+    fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
     return files + [png]
 
@@ -255,6 +294,6 @@ def figure_2(rows, folder):
             title = f"{treatment} | rounds {period} | {frame}\n{n} choices"
             draw_panel(axes[row, col], records, title, frame=frame)
     fig.tight_layout(rect=(0, 0, 1, 0.97))
-    fig.savefig(png, dpi=160)
+    fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
     return files + [png]

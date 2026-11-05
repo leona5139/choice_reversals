@@ -1,15 +1,15 @@
-"""Run with: uv run python -m analysis.run_analysis.analysis_test"""
+"""Run with: uv run python -m analysis.run_analysis.pilot_1"""
 from pathlib import Path
 
 from analysis.handler import run_analysis
-from results import load_players
+from simulation.results import load_players
 
-RUN_NAME = "test"
+RUN_NAME = "pilot_1"
 ANALYSIS_ORDER = []  # All analyses; use [0, 1] for the overview and Figure 1.
 METADATA = {
-    "title": "Test analysis",
-    "selection": "All players and rounds from test",
-    "notes": "",
+    "title": "Pilot 1 analysis",
+    "selection": "All players and rounds from pilot_1",
+    "notes": "The original 60 players were collected under the run name test and retain their recorded seeds.",
 }
 
 

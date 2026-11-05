@@ -3,7 +3,7 @@
   "selection": "All players and rounds from pilot_1",
   "notes": "The original 60 players were collected under the run name test and retain their recorded seeds.",
   "analysis_id": "pilot_1",
-  "timestamp": "2026-11-04T23:34:49.470319+00:00",
+  "timestamp": "2026-11-05T00:10:52.137851+00:00",
   "analysis_order": [
     0,
     1,
@@ -95,7 +95,7 @@
     "2P2A_4AR|openai/gpt-6-luna|t=1|prompt_a|1",
     "2P2A_4AR|openai/gpt-6-luna|t=1|prompt_a|4"
   ],
-  "git_commit": "b53c8f22dafc93a5d8fbbeb09dd7b97fa72a2807",
+  "git_commit": "06728b3f04f035f557119e092e9edc142e9f8753",
   "files": [
     "decisions.csv",
     "00_overview.csv",

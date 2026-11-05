@@ -1,6 +1,6 @@
 """Builds a treatment's outline: the order in which the prompt slots are used.
 
-Print one with:  python3 treatments.py 2A2P_4AR
+Print an outline with `uv run python -m simulation.treatments 2A2P_4AR`.
 """
 import re
 import sys
