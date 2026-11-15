@@ -36,7 +36,8 @@ def is_ex_ante_equalizing(this_round):
 def group_by_setup(players):
     groups = {}
     for player in players:
-        key = (player["treatment"], player["model"], player["temperature"], player["prompt_version"])
+        key = (player["treatment"], player["model"], player["temperature"],
+               player.get("reasoning", "default"), player["prompt_version"])
         groups.setdefault(key, []).append(player)
     return groups
 
@@ -60,11 +61,11 @@ def print_initial_choices(rounds, task):
 def print_summary(run_name):
     groups = group_by_setup(load_players(run_name))
 
-    for (treatment, model, temperature, prompt_version), players in sorted(groups.items()):
+    for (treatment, model, temperature, reasoning, prompt_version), players in sorted(groups.items()):
         rounds = [this_round for player in players for this_round in player["rounds"].values()]
         cost = sum(player["cost"] for player in players)
 
-        print(f"{treatment} | {model} | t={temperature} | {prompt_version} | {len(players)} players | ${cost:.4f}")
+        print(f"{treatment} | {model} | t={temperature} | r={reasoning} | {prompt_version} | {len(players)} players | ${cost:.4f}")
         print_revisions(rounds)
         for task in ["A", "P", "AR"]:
             print_initial_choices(rounds, task)

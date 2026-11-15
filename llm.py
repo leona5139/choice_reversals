@@ -8,14 +8,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+REASONING_LEVELS = ("off", "minimal", "low", "medium", "high")
+
 
 class LLM:
-    def __init__(self, provider, model, temperature=1.0, requests_per_minute=None, rate_limit_waits=5):
-        """requests_per_minute: shared across all threads; None means no limit.
+    def __init__(self, provider, model, temperature=1.0, reasoning="default",
+                 requests_per_minute=None, rate_limit_waits=5):
+        """reasoning: "default" sends nothing (the provider's default); otherwise one of
+        REASONING_LEVELS. Not every model supports every level; check the raw replies.
+        requests_per_minute: shared across all threads; None means no limit.
         rate_limit_waits: how many times to wait out a 429 before giving up."""
+        if reasoning not in ("default", *REASONING_LEVELS):
+            raise ValueError(f"reasoning must be 'default' or one of {REASONING_LEVELS}, not {reasoning!r}")
         self.provider = provider
         self.model = model
         self.temperature = temperature
+        self.reasoning = reasoning
         self.min_interval = 60.0 / requests_per_minute if requests_per_minute else 0.0
         self.rate_limit_waits = rate_limit_waits
         self._lock = threading.Lock()
@@ -29,7 +37,8 @@ class LLM:
             raise ValueError(f"unknown provider: {provider}")
 
     def settings(self):
-        return {"provider": self.provider, "model": self.model, "temperature": self.temperature}
+        return {"provider": self.provider, "model": self.model, "temperature": self.temperature,
+                "reasoning": self.reasoning}
 
     def wait_for_slot(self, extra_delay=0.0):
         """Reserves the next request slot (spaced min_interval apart) and sleeps until it."""
@@ -78,10 +87,18 @@ class LLM:
         )
 
     def call_openrouter(self, messages):
+        # https://openrouter.ai/docs/use-cases/reasoning-tokens
+        extra_body = {}
+        if self.reasoning == "off":
+            extra_body["reasoning"] = {"enabled": False}
+        elif self.reasoning != "default":
+            extra_body["reasoning"] = {"effort": self.reasoning}
+
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             temperature=self.temperature,
+            extra_body=extra_body or None,
         )
         return {
             "text": response.choices[0].message.content,
@@ -98,6 +115,11 @@ class LLM:
 
     def call_gemini(self, messages):
         config = {"temperature": self.temperature}
+        # Flash models turn thinking off with a budget of 0; Gemini 3 models take a thinking_level.
+        if self.reasoning == "off":
+            config["thinking_config"] = {"thinking_budget": 0}
+        elif self.reasoning != "default":
+            config["thinking_config"] = {"thinking_level": self.reasoning}
         contents = []
 
         for message in messages:

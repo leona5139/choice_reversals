@@ -86,7 +86,9 @@ def validate_players(players):
             if not isinstance(player[key], str) or not player[key]:
                 raise ValueError(f"invalid {key} for {player['player_id']}")
         number = participant_number(player)
-        expected_id = (f"{player['treatment']}|{player['model']}|t={player['temperature']}|"
+        reasoning = player.get("reasoning", "default")
+        reasoning = "" if reasoning == "default" else f"|r={reasoning}"
+        expected_id = (f"{player['treatment']}|{player['model']}|t={player['temperature']}{reasoning}|"
                        f"{player['prompt_version']}|{number}")
         if player["player_id"] != expected_id:
             raise ValueError(f"player metadata differs from its ID: {player['player_id']}")
@@ -123,7 +125,7 @@ def check_replies(players):
             text = message["content"]
             if single_json_allocation(text):
                 continue
-            deviations[player["model"]] += 1
+            deviations[model_label(player)] += 1
             if "```" in text:
                 fenced += 1
             elif len(re.findall(r"\{[^{}]*\}", text)) > 1:
@@ -139,6 +141,12 @@ def check_replies(players):
         raise ValueError(f"{mismatches} replies fail to reproduce their saved decisions")
 
 
+def model_label(player):
+    """The model name, plus the reasoning setting when one was sent."""
+    reasoning = player.get("reasoning", "default")
+    return player["model"] if reasoning == "default" else f"{player['model']} r={reasoning}"
+
+
 def initial_choices(players, treatment):
     """Rounds 1-4 of one treatment: category counts overall and by model."""
     overall, by_model = Counter(), {}
@@ -150,7 +158,7 @@ def initial_choices(players, treatment):
                 continue
             name = category(this_round["computer"]["A"], this_round["initial"]["A"])
             overall[name] += 1
-            by_model.setdefault(player["model"], Counter())[name] += 1
+            by_model.setdefault(model_label(player), Counter())[name] += 1
     print(f"{treatment} rounds 1-4: {sum(overall.values())} choices, {dict(overall)}")
     for model, counts in sorted(by_model.items()):
         print(f"  {model}: {sum(counts.values())} choices, {dict(counts)}")
@@ -163,7 +171,7 @@ def revisions(players):
         for this_round in player["rounds"].values():
             if this_round["task"] != "AR" or this_round["draw"]["group"] != "participant":
                 continue
-            key = (player["treatment"], player["model"])
+            key = (player["treatment"], model_label(player))
             total[key, "eligible"] += 1
             if this_round["revision"] != this_round["initial"]:
                 total[key, "changed"] += 1
@@ -248,8 +256,8 @@ def check_examples(players):
 def main(run_name):
     players = load_players(run_name)
     validate_players(players)
-    setups = Counter((p["model"], p["treatment"]) for p in players)
-    print(f"players: {len(players)} in {len({p['model'] for p in players})} models x "
+    setups = Counter((model_label(p), p["treatment"]) for p in players)
+    print(f"players: {len(players)} in {len({model_label(p) for p in players})} models x "
           f"{len({p['treatment'] for p in players})} treatments, "
           f"{min(setups.values())}-{max(setups.values())} per model and treatment")
     print(f"temperatures: {sorted({p['temperature'] for p in players})}, "

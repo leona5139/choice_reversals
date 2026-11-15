@@ -1,7 +1,9 @@
 """Shared choice categories and one-row-per-player-round data."""
 import csv
 
-SETUP_FIELDS = ("provider", "model", "temperature", "prompt_version")
+SETUP_FIELDS = ("provider", "model", "temperature", "reasoning", "prompt_version")
+# Splits for the by-model figures. Players saved before reasoning was recorded count as "default".
+MODEL_FIELDS = ("model", "temperature", "reasoning")
 PLAYER_FIELDS = ("run_name", "player_id", "player_number", "treatment", *SETUP_FIELDS)
 CATEGORIES = (
     "overcompensating", "ex_ante_equalizing", "mixed",
@@ -41,6 +43,7 @@ def round_rows(players):
             draw = this_round["draw"] or {}
             number = this_round["round"]
             row = {field: player.get(field) for field in PLAYER_FIELDS}
+            row["reasoning"] = player.get("reasoning", "default")
             row.update({
                 "seed": player["seed"],
                 "round": number,

@@ -194,11 +194,13 @@ def run_many(run_name, treatment, llm, n_players, prompts, max_retries=3, worker
     setup["prompt_version"] = prompts.PROMPT_VERSION or prompts.__name__
 
     def player_id(player_number):
-        return f"{treatment}|{llm.model}|t={llm.temperature}|{setup['prompt_version']}|{player_number}"
+        # Default reasoning is left out so IDs from earlier runs still match.
+        reasoning = "" if llm.reasoning == "default" else f"|r={llm.reasoning}"
+        return f"{treatment}|{llm.model}|t={llm.temperature}{reasoning}|{setup['prompt_version']}|{player_number}"
 
     already_saved = {player["player_id"] for player in load_players(run_name)}
     to_run = [n for n in range(n_players) if player_id(n) not in already_saved]
-    progress = tqdm(total=n_players, initial=n_players - len(to_run), desc=f"{treatment} {llm.model}")
+    progress = tqdm(total=n_players, initial=n_players - len(to_run), desc=f"{treatment} {llm.model} r={llm.reasoning}")
 
     def run_one(player_number):
         this_id = player_id(player_number)

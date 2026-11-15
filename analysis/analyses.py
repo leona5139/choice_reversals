@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle
 from matplotlib.ticker import FuncFormatter, MultipleLocator
 
-from analysis.utils import CATEGORIES, SETUP_FIELDS, group_rows, player_key, write_csv
+from analysis.utils import CATEGORIES, MODEL_FIELDS, SETUP_FIELDS, group_rows, player_key, write_csv
 from simulation.treatments import tasks_in
 
 FIGURE_DPI = 320
@@ -19,8 +19,13 @@ CHOICE_FIELDS = ("treatment", "period", "category", "consistency",
 
 
 def setup_label(setup):
-    provider, model, temperature, prompt_version = setup
-    return f"{provider} / {model} | t={temperature} | {prompt_version}"
+    provider, model, temperature, reasoning, prompt_version = setup
+    return f"{provider} / {model} | t={temperature} | r={reasoning} | {prompt_version}"
+
+
+def model_label(key):
+    model, temperature, reasoning = key
+    return f"{model} | t={temperature} | r={reasoning}"
 
 
 def overview(rows, folder):
@@ -41,14 +46,15 @@ def overview(rows, folder):
         })
         record.update({f"initial_{category}": categories[category] for category in CATEGORIES})
         table.append(record)
-        print(f"{setup_label(key[:4])} | {key[4]} {key[5]}: "
+        n = len(SETUP_FIELDS)
+        print(f"{setup_label(key[:n])} | {key[n]} {key[n + 1]}: "
               f"{len(choices)}/{len(group)} initial choices; "
               f"{record['changed_choices']}/{record['revision_opportunities']} revisions changed")
     return [write_csv(folder / "00_overview.csv", table)]
 
 
 def choice_distribution(rows, with_consistency=False, by=()):
-    """Groups by treatment and period. Pass by=("model", "temperature") to split further."""
+    """Groups by treatment and period. Pass by=MODEL_FIELDS to split further."""
     table = []
     fields = (*by, "treatment", "period")
     for key, group in group_rows(rows, fields).items():
@@ -159,8 +165,7 @@ def save_figure_1(table, png, suptitle, by=()):
             records = [r for r in group if r["treatment"] == treatment]
             n = records[0]["n_choices"] if records else 0
             title = f"{treatment} | {n} choices"
-            model, temperature = key
-            title = f"{model} | t={temperature}\n{title}"
+            title = f"{model_label(key)}\n{title}"
             draw_panel(axes[index, col], records, title, levels, frame="A" if col == 0 else "P")
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within rounds 1–4", loc="lower center", ncol=4)
@@ -182,7 +187,7 @@ def figure_1(rows, folder):
 
 
 def figure_1_by_model(rows, folder):
-    by = ("model", "temperature")
+    by = MODEL_FIELDS
     table = figure_1_choices(rows, by)
     files = [write_csv(folder / "04_fig1_by_model.csv", table, (*by, *CHOICE_FIELDS))]
     png = folder / "04_fig1_by_model.png"
@@ -190,7 +195,7 @@ def figure_1_by_model(rows, folder):
         png.unlink(missing_ok=True)
         print("Figure 1 by model: no data for 4A_4AR or 4P_4AR.")
         return files
-    save_figure_1(table, png, "Figure 1 by model and temperature: initial choices in rounds 1–4", by)
+    save_figure_1(table, png, "Figure 1 by model, temperature and reasoning: initial choices in rounds 1–4", by)
     return files + [png]
 
 
@@ -234,7 +239,7 @@ FIG3_FIELDS = ("panel", "category", "consistency", "count", "percent",
 def figure_3(rows, folder, by_model=False):
     """Original and final choices in rounds 5–8 of 4A_4AR."""
     selected = [r for r in rows if r["treatment"] == "4A_4AR" and 5 <= r["round"] <= 8]
-    by = ("model", "temperature") if by_model else ()
+    by = MODEL_FIELDS if by_model else ()
     groups = group_rows(selected, by) if by else {(): selected}
     table = []
     for setup, group in groups.items():
@@ -255,11 +260,11 @@ def figure_3(rows, folder, by_model=False):
         return files + [png]
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
     fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False)
-    fig.suptitle("Figure 3 by model and temperature: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
+    fig.suptitle("Figure 3 by model, temperature and reasoning: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
     for row, (setup, group) in enumerate(group_rows(table, by).items()):
         for col, (panel, _field, title) in enumerate(FIG3_PANELS):
             records = [r for r in group if r["panel"] == panel]
-            title = f"{setup[0]} | t={setup[1]}\n{title}"
+            title = f"{model_label(setup)}\n{title}"
             draw_panel(axes[row, col], records, f"{title}\n{records[0]['n_choices']} choices", levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within the panel", loc="lower center", ncol=4)
