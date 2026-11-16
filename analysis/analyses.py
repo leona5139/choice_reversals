@@ -259,7 +259,8 @@ def figure_3(rows, folder, by_model=False):
         save_paper_figure(png, panels, (15, 7.5), 86, "upper left")
         return files + [png]
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
-    fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False)
+    fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False,
+                             layout="constrained")
     fig.suptitle("Figure 3 by model, temperature and reasoning: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
     for row, (setup, group) in enumerate(group_rows(table, by).items()):
         for col, (panel, _field, title) in enumerate(FIG3_PANELS):
@@ -267,8 +268,7 @@ def figure_3(rows, folder, by_model=False):
             title = f"{model_label(setup)}\n{title}"
             draw_panel(axes[row, col], records, f"{title}\n{records[0]['n_choices']} choices", levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
-    fig.legend(handles=handles, title="Consistency within the panel", loc="lower center", ncol=4)
-    fig.tight_layout(rect=(0, 0.14 / len(groups), 1, 1 - 0.08 / len(groups)))
+    fig.legend(handles=handles, title="Consistency within the panel", loc="outside lower center", ncol=4)
     fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
     return files + [png]
