@@ -14,12 +14,15 @@ REASONING_LEVELS = ("off", "minimal", "low", "medium", "high")
 class LLM:
     def __init__(self, provider, model, temperature=1.0, reasoning="default",
                  requests_per_minute=None, rate_limit_waits=5):
-        """reasoning: "default" sends nothing (the provider's default); otherwise one of
-        REASONING_LEVELS. Not every model supports every level; check the raw replies.
+        """reasoning: "default" uses the provider's setting. Levels depend on the model.
+        OpenRouter also accepts "on" to enable reasoning without choosing a level.
         requests_per_minute: shared across all threads; None means no limit.
         rate_limit_waits: how many times to wait out a 429 before giving up."""
-        if reasoning not in ("default", *REASONING_LEVELS):
-            raise ValueError(f"reasoning must be 'default' or one of {REASONING_LEVELS}, not {reasoning!r}")
+        options = ("default", *REASONING_LEVELS)
+        if provider == "openrouter":
+            options += ("on",)
+        if reasoning not in options:
+            raise ValueError(f"reasoning for {provider} must be one of {options}, got {reasoning!r}")
         self.provider = provider
         self.model = model
         self.temperature = temperature
@@ -89,8 +92,8 @@ class LLM:
     def call_openrouter(self, messages):
         # https://openrouter.ai/docs/use-cases/reasoning-tokens
         extra_body = {}
-        if self.reasoning == "off":
-            extra_body["reasoning"] = {"enabled": False}
+        if self.reasoning in ("on", "off"):
+            extra_body["reasoning"] = {"enabled": self.reasoning == "on"}
         elif self.reasoning != "default":
             extra_body["reasoning"] = {"effort": self.reasoning}
 
