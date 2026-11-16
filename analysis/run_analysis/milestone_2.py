@@ -1,4 +1,4 @@
-"""Run with: uv run python -m analysis.run_analysis.pilot_1"""
+"""Run with: uv run python -m analysis.run_analysis.milestone_2"""
 
 from pathlib import Path
 
