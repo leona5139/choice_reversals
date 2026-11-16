@@ -158,7 +158,8 @@ def save_figure_1(table, png, suptitle, by=()):
         return
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
     groups = group_rows(table, by)
-    fig, axes = plt.subplots(len(groups), 2, figsize=(11, 2.8 * len(groups)), squeeze=False)
+    fig, axes = plt.subplots(len(groups), 2, figsize=(11, 2.8 * len(groups)), squeeze=False,
+                             layout="constrained")
     fig.suptitle(suptitle, fontsize=14)
     for index, (key, group) in enumerate(groups.items()):
         for col, treatment in enumerate(FIG1_TREATMENTS):
@@ -168,8 +169,7 @@ def save_figure_1(table, png, suptitle, by=()):
             title = f"{model_label(key)}\n{title}"
             draw_panel(axes[index, col], records, title, levels, frame="A" if col == 0 else "P")
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
-    fig.legend(handles=handles, title="Consistency within rounds 1–4", loc="lower center", ncol=4)
-    fig.tight_layout(rect=(0, 0.14 / len(groups), 1, 1 - 0.08 / len(groups)))
+    fig.legend(handles=handles, title="Consistency within rounds 1–4", loc="outside lower center", ncol=4)
     fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
 
