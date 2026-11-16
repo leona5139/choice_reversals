@@ -1,5 +1,6 @@
 """Overview and the initial-choice comparisons in Figures 1 and 2."""
 from collections import Counter
+from textwrap import fill
 
 import matplotlib
 
@@ -24,8 +25,10 @@ def setup_label(setup):
 
 
 def model_label(key):
-    model, temperature, reasoning = key
-    return f"{model} | t={temperature} | r={reasoning}"
+    model, temperature, reasoning, *source = key
+    label = f"{model} | t={temperature} | r={reasoning}"
+    details = "   ".join(f"{name}={value}" for name, value in zip(("prompt", "run"), source) if value)
+    return f"{label}\n{fill(details, width=44)}" if details else label
 
 
 def overview(rows, folder):
@@ -195,7 +198,7 @@ def figure_1_by_model(rows, folder):
         png.unlink(missing_ok=True)
         print("Figure 1 by model: no data for 4A_4AR or 4P_4AR.")
         return files
-    save_figure_1(table, png, "Figure 1 by model, temperature and reasoning: initial choices in rounds 1–4", by)
+    save_figure_1(table, png, "Figure 1. Initial choices by model, prompt version and run (rounds 1–4)", by)
     return files + [png]
 
 
@@ -261,12 +264,12 @@ def figure_3(rows, folder, by_model=False):
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
     fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False,
                              layout="constrained")
-    fig.suptitle("Figure 3 by model, temperature and reasoning: Original and final choices in rounds 5–8 of 4A_4AR", fontsize=14)
+    fig.suptitle("Figure 3. Original and final choices by model, prompt version and run (4A_4AR, rounds 5–8)", fontsize=14)
     for row, (setup, group) in enumerate(group_rows(table, by).items()):
         for col, (panel, _field, title) in enumerate(FIG3_PANELS):
             records = [r for r in group if r["panel"] == panel]
-            title = f"{model_label(setup)}\n{title}"
-            draw_panel(axes[row, col], records, f"{title}\n{records[0]['n_choices']} choices", levels)
+            title = f"{model_label(setup)}\n{title} | {records[0]['n_choices']} choices"
+            draw_panel(axes[row, col], records, title, levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within the panel", loc="outside lower center", ncol=4)
     fig.savefig(png, dpi=FIGURE_DPI)

@@ -3,7 +3,7 @@ import csv
 
 SETUP_FIELDS = ("provider", "model", "temperature", "reasoning", "prompt_version")
 # Splits for the by-model figures. Players saved before reasoning was recorded count as "default".
-MODEL_FIELDS = ("model", "temperature", "reasoning")
+MODEL_FIELDS = ("model", "temperature", "reasoning", "prompt_version", "run_name")
 PLAYER_FIELDS = ("run_name", "player_id", "player_number", "treatment", *SETUP_FIELDS)
 CATEGORIES = (
     "overcompensating", "ex_ante_equalizing", "mixed",
@@ -69,7 +69,8 @@ def round_rows(players):
 def group_rows(rows, fields):
     groups = {}
     for row in rows:
-        key = tuple(row[field] for field in fields)
+        key = tuple((row.get(field) or None) if field in ("prompt_version", "run_name") else row[field]
+                    for field in fields)
         groups.setdefault(key, []).append(row)
     return dict(sorted(groups.items(), key=lambda item: tuple(str(v) for v in item[0])))
 

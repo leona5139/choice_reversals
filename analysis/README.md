@@ -17,8 +17,7 @@ Each run writes the selected outputs to `output/analysis/pilot_1/`.
 - `01_fig1_choices.csv` / `.png`: pure A/P treatments, rounds 1–4.
 - `02_fig2_choices.csv` / `.png`: all treatments, rounds 1–2, 3–4, and 5–8.
 - `03_fig3_revisions.csv` / `.png`: initial choices, final choices, and changes in rounds 5–8 of `4A_4AR`.
-- `04_fig1_by_model.csv` / `.png`: Figure 1 by model and temperature.
-- `05_fig3_by_model.csv` / `.png`: Figure 3 by model and temperature.
+- `04_fig1_by_model` and `05_fig3_by_model` each save a CSV and PNG grouped by model, temperature, reasoning, prompt version, and run name when available.
 
 Figures 1 and 2 pool initial choices across models and exclude skipped decisions. Figure 1 shades
 each category by its frequency within a player's choices. Figure 2 uses plain bars.
