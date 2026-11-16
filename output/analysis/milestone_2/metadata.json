@@ -3,7 +3,7 @@
   "selection": "All players and rounds from milestone 2",
   "notes": "",
   "analysis_id": "milestone_2",
-  "timestamp": "2026-11-16T20:11:40.131844+00:00",
+  "timestamp": "2026-11-16T20:17:04.791706+00:00",
   "analysis_order": [
     0,
     1,
@@ -935,7 +935,7 @@
     "2P2A_4AR|qwen/qwen3.8-flash|t=1|r=medium|prompt_a|18",
     "2P2A_4AR|qwen/qwen3.8-flash|t=1|r=medium|prompt_a|19"
   ],
-  "git_commit": "4edaed271c16f649fd0eb4b8ae7dd3b96fb09f40",
+  "git_commit": "39c29df306bc277ab81fe939367f9a8a70733072",
   "files": [
     "decisions.csv",
     "00_overview.csv",
