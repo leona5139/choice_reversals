@@ -1,6 +1,6 @@
 # Human benchmark data
 
-Open `code and data files/.RData` in the [replication archive](raw/2016200data.zip). The four main treatments have 1,912 rows in `allocations` (239 participants × 8 rounds).
+Open the [authors’ R workspace](raw/code%20and%20data%20files/.RData). The four main treatments have 1,912 rows in `allocations` (239 participants × 8 rounds).
 
 | `Treatment` | `4A_4AR` | `4P_4AR` | `2A2P_4AR` | `2P2A_4AR` |
 | --- | ---: | ---: | ---: | ---: |

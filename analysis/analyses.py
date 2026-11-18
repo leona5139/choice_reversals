@@ -1,4 +1,4 @@
-"""Overview and the initial-choice comparisons in Figures 1 and 2."""
+"""Overview and choice distributions for Figures 1–3."""
 from collections import Counter
 from textwrap import fill
 
@@ -100,6 +100,7 @@ def draw_panel(ax, records, title, levels=None, frame="A"):
     ax.grid(axis="y", color="0.88", linewidth=0.6)
     ax.set_facecolor("0.94" if frame == "P" else "white")
     if not records or records[0]["n_choices"] == 0:
+        ax.set_xlim(-0.6, len(CATEGORIES) - 0.4)
         ax.text(0.5, 0.5, "No observed choices", ha="center", transform=ax.transAxes)
         return
     bottom = [0.0] * 5
@@ -113,6 +114,7 @@ def draw_panel(ax, records, title, levels=None, frame="A"):
 
 
 FIG1_TREATMENTS = ("4A_4AR", "4P_4AR")
+MAIN_TREATMENTS = ("2A2P_4AR", "2P2A_4AR", "4A_4AR", "4P_4AR")
 
 
 def save_paper_figure(png, panels, figsize, top, legend_position):
@@ -202,18 +204,24 @@ def figure_1_by_model(rows, folder):
     return files + [png]
 
 
-def marginal_distribution(rows, category_field):
-    """Same five-category bars as Figure 1, for one already-selected set of rounds."""
-    choices = [r for r in rows if r.get(category_field) is not None]
+def marginal_distribution(rows, category_field, *, changes_only=False):
+    """For changes, measure each player's consistency across all eligible responses."""
     per_player = {}
-    for row in choices:
-        per_player.setdefault(player_key(row), Counter())[row[category_field]] += 1
+    for row in rows:
+        category = row[category_field]
+        if category is not None:
+            per_player.setdefault(player_key(row), Counter())[category] += 1
+    if changes_only:
+        rows = [r for r in rows if r["changed"] is True]
+    choices = [r for r in rows if r[category_field] is not None]
     counts = Counter()
     for row in choices:
         category = row[category_field]
         own = per_player[player_key(row)]
         counts[category, own[category] / own.total()] += 1
     levels = sorted({level for _, level in counts}) or [None]
+    n_players = len({player_key(r) for r in rows})
+    n_respondents = len({player_key(r) for r in choices})
     table = []
     for category in CATEGORIES:
         for consistency in levels:
@@ -223,8 +231,8 @@ def marginal_distribution(rows, category_field):
                 "consistency": consistency,
                 "count": count,
                 "percent": 100 * count / len(choices) if choices else None,
-                "n_players": len({player_key(r) for r in rows}),
-                "n_respondents": len(per_player),
+                "n_players": n_players,
+                "n_respondents": n_respondents,
                 "n_choices": len(choices),
             })
     return table
@@ -232,46 +240,47 @@ def marginal_distribution(rows, category_field):
 
 FIG3_PANELS = (
     ("initial", "initial_category", "Initial"),
-    ("final", "final_category", "Final"),
-    ("changes", "final_category", "Final (changes only)"),
+    ("final", "revision_category", "Final"),
+    ("changes", "revision_category", "Final (changes only)"),
 )
 FIG3_FIELDS = ("panel", "category", "consistency", "count", "percent",
                "n_players", "n_respondents", "n_choices")
 
 
 def figure_3(rows, folder, by_model=False):
-    """Original and final choices in rounds 5–8 of 4A_4AR."""
-    selected = [r for r in rows if r["treatment"] == "4A_4AR" and 5 <= r["round"] <= 8]
+    """Pool rounds 5–8 of the four main treatments, as in the authors' plots.R."""
+    selected = [r for r in rows if r["treatment"] in MAIN_TREATMENTS and 5 <= r["round"] <= 8]
     by = MODEL_FIELDS if by_model else ()
     groups = group_rows(selected, by) if by else {(): selected}
     table = []
     for setup, group in groups.items():
+        offers = [r for r in group if r["revision_offered"]]
         for panel, field, _title in FIG3_PANELS:
-            source = [r for r in group if r["changed"] is True] if panel == "changes" else group
+            source = group if panel == "initial" else offers
             table.extend({**dict(zip(by, setup)), "panel": panel, **record}
-                         for record in marginal_distribution(source, field))
+                         for record in marginal_distribution(source, field, changes_only=panel == "changes"))
     stem = "05_fig3_by_model" if by_model else "03_fig3_revisions"
     files = [write_csv(folder / f"{stem}.csv", table, (*by, *FIG3_FIELDS))]
     png = folder / f"{stem}.png"
     if not selected:
         png.unlink(missing_ok=True)
-        print("Figure 3: no rounds 5–8 for 4A_4AR.")
+        print("Figure 3: no rounds 5–8 for the four main treatments.")
         return files
     if not by_model:
         panels = [(title, [r for r in table if r["panel"] == panel]) for panel, _, title in FIG3_PANELS]
-        save_paper_figure(png, panels, (15, 7.5), 86, "upper left")
+        save_paper_figure(png, panels, (15, 7.5), 86, "best")
         return files + [png]
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
     fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False,
                              layout="constrained")
-    fig.suptitle("Figure 3. Original and final choices by model, prompt version and run (4A_4AR, rounds 5–8)", fontsize=14)
+    fig.suptitle("Figure 3. Original and final choices by model, prompt version and run (all treatments, rounds 5–8)", fontsize=14)
     for row, (setup, group) in enumerate(group_rows(table, by).items()):
         for col, (panel, _field, title) in enumerate(FIG3_PANELS):
             records = [r for r in group if r["panel"] == panel]
             title = f"{model_label(setup)}\n{title} | {records[0]['n_choices']} choices"
             draw_panel(axes[row, col], records, title, levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
-    fig.legend(handles=handles, title="Consistency within the panel", loc="outside lower center", ncol=4)
+    fig.legend(handles=handles, title="Consistency", loc="outside lower center", ncol=4)
     fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
     return files + [png]
@@ -282,9 +291,8 @@ def figure_3_by_model(rows, folder):
 
 
 def figure_2(rows, folder):
-    treatments = ("2A2P_4AR", "2P2A_4AR", "4A_4AR", "4P_4AR")
     periods = ("1-2", "3-4", "5-8")
-    selected = [r for r in rows if r["treatment"] in treatments]
+    selected = [r for r in rows if r["treatment"] in MAIN_TREATMENTS]
     table = choice_distribution(selected)
     files = [write_csv(folder / "02_fig2_choices.csv", table, CHOICE_FIELDS)]
     png = folder / "02_fig2_choices.png"
@@ -294,7 +302,7 @@ def figure_2(rows, folder):
         return files
     fig, axes = plt.subplots(4, 3, figsize=(15, 12), squeeze=False)
     fig.suptitle("Figure 2: Initial choices across treatment sequences", fontsize=14)
-    for row, treatment in enumerate(treatments):
+    for row, treatment in enumerate(MAIN_TREATMENTS):
         for col, period in enumerate(periods):
             records = [r for r in table if r["treatment"] == treatment and r["period"] == period]
             n = records[0]["n_choices"] if records else 0
