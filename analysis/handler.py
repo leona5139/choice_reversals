@@ -17,6 +17,7 @@ ANALYSES = {
     6: analyses.initial_choice_tvd,
     7: analyses.equal_split_frames,
     8: analyses.equal_split_revisions,
+    9: analyses.comparison_tables,
 }
 
 

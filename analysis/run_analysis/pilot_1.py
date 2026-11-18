@@ -1,6 +1,7 @@
 """Run with: uv run python -m analysis.run_analysis.pilot_1"""
 from pathlib import Path
 
+from analysis.analyses import MAIN_TREATMENTS
 from analysis.handler import run_analysis
 from simulation.results import load_players
 
@@ -15,18 +16,18 @@ ANALYSIS_IDS = [
 ]
 METADATA = {
     "title": "Pilot 1 analysis",
-    "selection": "All players and rounds from pilot_1",
+    "selection": f"All rounds from {RUN_NAME} for {', '.join(MAIN_TREATMENTS)}",
     "notes": "The original 60 players were collected under the run name test and retain their recorded seeds.",
 }
 
 
 def main():
     ## Load and filter players here.
-    players = load_players(RUN_NAME)
+    players = [p for p in load_players(RUN_NAME) if p.get("treatment") in MAIN_TREATMENTS]
     # Older saved players did not include run_name.
     players = [{**p, "run_name": p.get("run_name", RUN_NAME)} for p in players]
     if not players:
-        raise SystemExit(f"No players in output/results/{RUN_NAME}/players.jsonl. Run the simulation first.")
+        raise SystemExit(f"No players from the four main treatments in output/results/{RUN_NAME}/players.jsonl.")
     run_analysis(players, Path(__file__).stem, METADATA, ANALYSIS_IDS)
 
 

@@ -1,5 +1,6 @@
 """Experiment figures and summary tables."""
 from collections import Counter, defaultdict
+from decimal import Decimal, ROUND_HALF_UP
 from math import isnan, nan
 
 import matplotlib
@@ -12,8 +13,8 @@ from matplotlib.ticker import FuncFormatter, MultipleLocator, PercentFormatter
 
 from analysis.process_human_benchmark import load_human_players
 from analysis.utils import (
-    CATEGORIES, MODEL_FIELDS, SETUP_FIELDS, choice_distribution, equal_split_summary, group_rows,
-    marginal_distribution, player_key, round_rows, total_variation, write_csv,
+    CATEGORIES, MODEL_FIELDS, SETUP_FIELDS, block_tvds, choice_distribution, complete_mean,
+    equal_split_summary, group_rows, marginal_distribution, player_key, round_rows, write_csv,
 )
 from simulation.treatments import tasks_in
 
@@ -22,6 +23,15 @@ COMPARISON_RED = "#a1421b"
 LABELS = ["Over-\ncompensating", "Ex ante\nequalizing", "Mixed\n", "Ex post\nequalizing", "Reinforcing\n"]
 CHOICE_FIELDS = ("treatment", "period", "category", "consistency",
                  "count", "percent", "n_players", "n_respondents", "n_choices")
+REPORT_NAMES = {
+    "anthropic/claude-haiku-5.5": "Haiku 5.5",
+    "deepseek/deepseek-v4.1-flash-1017": "DeepSeek V4.1 Flash",
+    "google/gemini-3.8-flash": "Gemini 3.8 Flash",
+    "google/gemma-4-31b-it": "Gemma 4 31B",
+    "openai/gpt-6-luna": "GPT-6 Luna",
+    "qwen/qwen3.8-flash": "Qwen 3.8 Flash",
+}
+EARLIER_GEMMA = ("google/gemma-4-31b-it", 1, "default", "prompt_a", "milestone_2")
 
 
 def setup_label(setup):
@@ -29,11 +39,11 @@ def setup_label(setup):
     return f"{provider} / {model} | t={temperature} | r={reasoning} | {prompt_version}"
 
 
-def model_labels(setups):
+def model_labels(setups, short=False):
     show_prompt = len({prompt for _, _, _, prompt, _ in setups}) > 1
     labels, settings = [], []
     for model, temp, reasoning, prompt, run in setups:
-        label = f"{model} · {reasoning}"
+        label = f"{REPORT_NAMES.get(model, model)} ({reasoning})" if short else f"{model} · {reasoning}"
         if show_prompt:
             label += f" · {prompt or 'unknown prompt'}"
         labels.append(label)
@@ -302,10 +312,9 @@ def initial_choice_tvd(rows, folder):
         table, scores = [], []
         for setup, counts in models.items():
             row_scores = []
-            for treatment, period in blocks:
+            for (treatment, period), distance in block_tvds(counts, humans, blocks).items():
                 model = counts[treatment, period]
                 human = humans[treatment, period]
-                distance = total_variation(model, human)
                 row_scores.append(nan if distance is None else distance)
                 table.append({
                     **dict(zip(MODEL_FIELDS, setup)), "treatment": treatment, "period": period,
@@ -327,62 +336,142 @@ def comparison_groups(rows):
     return humans | group_rows(rows, MODEL_FIELDS)
 
 
-def save_equal_split(folder, stem, table, title, caption):
-    csv = write_csv(folder / f"{stem}.csv", table)
-    labels, settings = model_labels([tuple(r[k] for k in MODEL_FIELDS) for r in table[1:]])
-    fig, ax = plt.subplots(figsize=(10.7, 2 + 0.38 * len(table)), layout="constrained")
-    fig.suptitle(title, fontsize=15)
-    ax.axhspan(-0.45, 0.45, color="#eaf2f5", zorder=0)
-    ax.set_yticks(range(len(table)), ["Humans (Andreoni et al., 2020)", *labels], fontsize=10)
-    ax.get_yticklabels()[0].set_weight("bold")
-    ax.set_ylim(len(table) - 0.5, -0.5)
-    ax.set_xlim(-3, 103)
-    ax.set_xticks(range(0, 101, 20))
-    ax.xaxis.set_major_formatter(PercentFormatter(100, decimals=0))
-    ax.set_xlabel("Allocations at 5/5")
-    ax.grid(axis="x", color="0.9")
-    ax.set_axisbelow(True)
-    ax.tick_params(axis="y", length=0)
-    ax.spines[["top", "right", "left"]].set_visible(False)
-    ax.text(1.015, 1.015, "Change (pp)", transform=ax.transAxes, fontsize=9, weight="bold")
-    for i, row in enumerate(table):
-        ax.plot([row["first_percent"], row["second_percent"]], [i, i], color="0.64", lw=2)
-        delta = row["change_pp"]
-        ax.text(1.015, i, "—" if delta is None else f"{delta:+.1f}", transform=ax.get_yaxis_transform(),
-                va="center", fontsize=10, weight="bold" if i == 0 else "normal")
-    for prefix, size, fill, edge in (("first", 9, "white", "#234f67"), ("second", 5, COMPARISON_RED, COMPARISON_RED)):
-        ax.plot([r[f"{prefix}_percent"] for r in table], range(len(table)), linestyle="none", marker="o",
-                markersize=size, markerfacecolor=fill, markeredgecolor=edge, markeredgewidth=1.5,
-                label=table[0][f"{prefix}_stage"])
-    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncols=2, frameon=False)
+def framing_row(setup, rows):
+    initial = [r for r in rows if 1 <= r["round"] <= 4 and r["initial_a"] is not None]
+    a = [r["initial_a"] for r in initial if r["treatment"] == "4A_4AR"]
+    p = [r["initial_a"] for r in initial if r["treatment"] == "4P_4AR" and r["draw_group"] == "participant"]
+    return equal_split_summary(setup, ("4A · ex ante", a), ("4P · ex post", p))
+
+
+def revision_rows(setup, rows):
+    offers = [r for r in rows if 5 <= r["round"] <= 8 and r["revision_offered"]
+              and r["initial_a"] is not None and r["revision_a"] is not None]
+    table = []
+    for treatment in MAIN_TREATMENTS:
+        group = [r for r in offers if r["treatment"] == treatment]
+        before = [r["initial_a"] for r in group]
+        after = [r["revision_a"] for r in group]
+        row = equal_split_summary(setup, ("Before reveal", before), ("After revision offer", after))
+        changed = sum(a != b for a, b in zip(before, after))
+        to_even = sum(a != 5 and b == 5 for a, b in zip(before, after))
+        row.update(treatment=treatment, changed_choices=changed, moved_to_5_5=to_even,
+                   moved_from_5_5=sum(a == 5 and b != 5 for a, b in zip(before, after)),
+                   changed_percent=100 * changed / len(group) if group else None,
+                   percent_of_changes_to_5_5=100 * to_even / changed if changed else None)
+        table.append(row)
+
+    summary = {**table[0], "treatment": "equal_treatment_mean"}
+    for key in ("first_choices", "second_choices", "first_5_5", "second_5_5",
+                "changed_choices", "moved_to_5_5", "moved_from_5_5"):
+        summary[key] = sum(row[key] for row in table)
+    for key in ("first_percent", "second_percent", "change_pp", "changed_percent", "percent_of_changes_to_5_5"):
+        summary[key] = complete_mean(row[key] for row in table)
+    return [*table, summary]
+
+
+def equal_split_frames(rows, folder):
+    frames = [framing_row(setup, group) for setup, group in comparison_groups(rows).items()]
+    return [write_csv(folder / "07_5_5_frames.csv", frames)]
+
+
+def equal_split_revisions(rows, folder):
+    frames, revisions = [], []
+    for setup, group in comparison_groups(rows).items():
+        frames.append(framing_row(setup, group))
+        revisions.extend(revision_rows(setup, group))
+    csv = write_csv(folder / "08_5_5_revisions.csv", revisions)
+    means = [r for r in revisions if r["treatment"] == "equal_treatment_mean"]
+    labels, settings = model_labels([tuple(r[k] for k in MODEL_FIELDS) for r in frames[1:]], short=True)
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(11.5, 1.7 + 0.38 * len(frames)), layout="constrained")
+    fig.suptitle("Equal (5/5) allocations", fontsize=15)
+    y = range(len(frames))
+    for ax, table, title in zip(axes, (frames, means), ("Initial choices · rounds 1–4", "Revision offers · rounds 5–8")):
+        ax.set_title(title, loc="left", fontsize=12)
+        ax.axhspan(-0.45, 0.45, color="#eaf2f5", zorder=0)
+        for i, row in enumerate(table):
+            ax.plot([row["first_percent"], row["second_percent"]], [i, i], color="0.64", lw=2)
+        for stage, marker, size, fill, edge in (("first", "o", 9, "white", "#234f67"),
+                                              ("second", "D", 5, COMPARISON_RED, COMPARISON_RED)):
+            ax.plot([r[f"{stage}_percent"] for r in table], y, linestyle="none", marker=marker,
+                    markersize=size, markerfacecolor=fill, markeredgecolor=edge, markeredgewidth=1.4,
+                    label=table[0][f"{stage}_stage"])
+        ax.set_xlim(-3, 103)
+        ax.set_xticks(range(0, 101, 25))
+        ax.xaxis.set_major_formatter(PercentFormatter(100, decimals=0))
+        ax.grid(axis="x", color="0.9")
+        ax.set_axisbelow(True)
+        ax.tick_params(axis="y", length=0)
+        ax.spines[["top", "right", "left"]].set_visible(False)
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.09), ncols=2, frameon=False)
+    axes[0].set_yticks(y, ["Human benchmark", *labels])
+    axes[0].get_yticklabels()[0].set_weight("bold")
+    axes[0].set_ylim(len(frames) - 0.5, -0.5)
+    caption = "Revision rates give each treatment 25% weight"
     fig.supxlabel("  ·  ".join(filter(None, (caption, settings))), fontsize=9)
-    png = folder / f"{stem}.png"
+    png = folder / "08_5_5_framing_and_revisions.png"
     fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
     return [csv, png]
 
 
-def equal_split_frames(rows, folder):
-    table = []
-    for setup, group in comparison_groups(rows).items():
-        initial = [r for r in group if 1 <= r["round"] <= 4 and r["initial_a"] is not None]
-        a = [r["initial_a"] for r in initial if r["treatment"] == "4A_4AR"]
-        p = [r["initial_a"] for r in initial if r["treatment"] == "4P_4AR" and r["draw_group"] == "participant"]
-        table.append(equal_split_summary(setup, ("4A · ex ante", a), ("4P · ex post", p)))
-    return save_equal_split(folder, "07_5_5_frames", table, "Initial 5/5 choices, rounds 1–4",
-                           "Separate groups. 4P includes only rounds the player’s group won.")
+REPORT_RATES = ("initial_4a_5_5_percent", "initial_4p_5_5_percent", "before_5_5_percent",
+                "after_5_5_percent", "changed_percent")
 
 
-def equal_split_revisions(rows, folder):
-    table = []
-    for setup, group in comparison_groups(rows).items():
-        offers = [r for r in group if r["treatment"] in MAIN_TREATMENTS and 5 <= r["round"] <= 8
-                  and r["revision_offered"] and r["initial_a"] is not None and r["revision_a"] is not None]
-        before = [r["initial_a"] for r in offers]
-        after = [r["revision_a"] for r in offers]
-        record = equal_split_summary(setup, ("Before reveal", before), ("After revision offer", after))
-        record["moved_to_5_5"] = sum(r["initial_a"] != 5 and r["revision_a"] == 5 for r in offers)
-        record["moved_from_5_5"] = sum(r["initial_a"] == 5 and r["revision_a"] != 5 for r in offers)
-        table.append(record)
-    return save_equal_split(folder, "08_5_5_revisions", table, "5/5 choices at revision, rounds 5–8",
-                           "Same revision offers across all four treatments")
+def write_summary_tex(path, rows):
+    def number(value, unit):
+        if value is None:
+            return "---"
+        return str(Decimal(str(value)).quantize(Decimal(unit), rounding=ROUND_HALF_UP))
+
+    escapes = str.maketrans({c: "\\" + c for c in "&%$#_{}"} | {
+        "\\": r"\textbackslash{}", "^": r"\textasciicircum{}", "~": r"\textasciitilde{}",
+    })
+    labels, _ = model_labels([tuple(r[k] for k in MODEL_FIELDS) for r in rows[1:]], short=True)
+    lines = [r"\begin{tabular}{@{}lrrrrrr@{}}\toprule",
+             r" & Mean & \multicolumn{2}{c}{Initial 5/5 (\%)} & \multicolumn{3}{c}{Eligible rounds 5--8 (\%)}\\",
+             r"\cmidrule(lr){3-4}\cmidrule(l){5-7}",
+             r"Setting & TVD & 4A & 4P & 5/5 before & 5/5 after & Changed\\\midrule"]
+    for row, label in zip(rows, ["Human benchmark", *labels]):
+        label = label.translate(escapes)
+        if "\n" in label:
+            label = r"\shortstack[l]{" + label.replace("\n", r"\\") + "}"
+        human = row["sample"] == "human"
+        tvd = "ref." if human else number(row["mean_tvd"], ".001")
+        cells = [label, tvd, *(number(row[key], ".1") for key in REPORT_RATES)]
+        line = " & ".join(cells) + r" \\"
+        if row["sample"] == "earlier":
+            lines.extend([r"\ifdefined\plannedonly\else", r"\midrule", line, r"\fi"])
+        else:
+            lines.append(line)
+        if human:
+            lines.append(r"\midrule")
+    path.write_text("\n".join([*lines, r"\bottomrule\end{tabular}", ""]), encoding="utf-8")
+    return path
+
+
+def comparison_tables(rows, folder):
+    groups = comparison_groups(rows)
+    benchmark = next(iter(groups))
+    human_counts = initial_counts(groups[benchmark])
+    samples = {benchmark: "human", EARLIER_GEMMA: "earlier"}
+    tables = {6: [], 12: []}
+    for setup, group in groups.items():
+        frame = framing_row(setup, group)
+        revision = revision_rows(setup, group)[-1]
+        counts = human_counts if setup == benchmark else initial_counts(group)
+        for blocks in (BLOCKS_6, BLOCKS_12):
+            tables[len(blocks)].append({
+                **dict(zip(MODEL_FIELDS, setup)), "sample": samples.get(setup, "main"),
+                "mean_tvd": complete_mean(block_tvds(counts, human_counts, blocks).values()),
+                "initial_4a_5_5_percent": frame["first_percent"], "initial_4p_5_5_percent": frame["second_percent"],
+                "before_5_5_percent": revision["first_percent"], "after_5_5_percent": revision["second_percent"],
+                "changed_percent": revision["changed_percent"],
+            })
+    files = []
+    for size, table in tables.items():
+        table.sort(key=lambda r: (r["sample"] != "human", r["sample"] == "earlier", r["model"], r["reasoning"] != "off"))
+        stem = f"09_summary_{size}_blocks"
+        files.append(write_csv(folder / f"{stem}.csv", table))
+        files.append(write_summary_tex(folder / f"{stem}.tex", table))
+    return files

@@ -19,10 +19,11 @@ Each run writes its outputs to `output/analysis/<run script name>/`.
 - `03_fig3_revisions.csv` / `.png` pool rounds 5–8 of all four treatments. The panels show all initial choices, responses to revision offers (including keeps), and changed allocations. Both revision panels measure consistency over each player’s full set of responses to offers.
 - `04_fig1_by_model` and `05_fig3_by_model` show Figures 1 and 3 for each model setting.
 - `06_tvd_12_blocks` and `06_tvd_6_blocks` compare Milestone 2 initial choices with matched human choices. Each saves a heatmap and its counts. [TVD definition and block selection](../docs/analysis/tvd.md)
-- `07_5_5_frames` compares the share choosing 5/5 in 4A and 4P in rounds 1–4. Each dot uses the observed initial choices in its treatment.
-- `08_5_5_revisions` compares the same rounds before and after a revision offer, pooling rounds 5–8 across all four treatments. Its CSV also counts moves into and out of 5/5.
+- `07_5_5_frames.csv` gives the initial 5/5 rates in 4A and 4P for rounds 1–4.
+- `08_5_5_framing_and_revisions.png` pairs those rates with 5/5 choices before and after a revision offer. In `08_5_5_revisions.csv`, the summary sums counts and averages the four treatment rates equally. A treatment with no changes leaves its share of changes to 5/5 and the mean of that share blank.
+- `09_summary_6_blocks` and `09_summary_12_blocks` save the report tables as CSV and TeX. Each uses the unweighted mean of its block TVDs. The twelve-block appendix includes the earlier Gemma-default sample.
 
-Charts 04–08 group by model, temperature, reasoning, prompt version, and run. The CSVs keep the prompt version. The charts label it only when the models use more than one version.
+Outputs 04–09 group by model, temperature, reasoning, prompt version, and run. The CSVs keep the prompt version. Charts and tables label it only when the models use more than one version.
 
 Figures 1 and 2 pool initial choices across models and exclude skipped decisions. Figure 1 shades
 each category by its frequency within a player's choices. Figure 2 uses plain bars.

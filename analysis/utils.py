@@ -1,6 +1,7 @@
 """Round records and choice statistics."""
 from collections import Counter
 import csv
+from statistics import mean
 
 SETUP_FIELDS = ("provider", "model", "temperature", "reasoning", "prompt_version")
 MODEL_FIELDS = ("model", "temperature", "reasoning", "prompt_version", "run_name")
@@ -127,6 +128,16 @@ def total_variation(model, human):
     return 0.5 * sum(abs(model[c] / n_model - human[c] / n_human) for c in CATEGORIES)
 
 
+def block_tvds(model, human, blocks):
+    return {block: total_variation(model[block], human[block]) for block in blocks}
+
+
+def complete_mean(values):
+    """Give every treatment or block equal weight. Leave the mean blank if one is missing."""
+    values = list(values)
+    return mean(values) if values and None not in values else None
+
+
 def equal_split_summary(setup, first, second):
     result = dict(zip(MODEL_FIELDS, setup))
     for prefix, (stage, choices) in (("first", first), ("second", second)):
@@ -142,7 +153,7 @@ def equal_split_summary(setup, first, second):
 
 def write_csv(path, rows, fields=None):
     with open(path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fields or list(rows[0]))
+        writer = csv.DictWriter(f, fieldnames=fields or list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     return path

@@ -1,0 +1,14 @@
+model,temperature,reasoning,prompt_version,run_name,sample,mean_tvd,initial_4a_5_5_percent,initial_4p_5_5_percent,before_5_5_percent,after_5_5_percent,changed_percent
+human,,,,human_replication,human,0.0,8.098591549295774,43.05555555555556,7.055702269170579,56.433392018779344,65.16774256651017
+anthropic/claude-haiku-5.5,1,off,prompt_a,milestone_2,main,0.7356416918911127,100.0,85.0,96.875,96.875,0.0
+anthropic/claude-haiku-5.5,1,medium,prompt_a,milestone_2,main,0.4255209038097984,40.0,35.0,64.375,72.5,29.375
+deepseek/deepseek-v4.1-flash-1017,1,off,prompt_a,milestone_2,main,0.3980690490408337,47.5,55.0,31.25,30.625,15.625
+deepseek/deepseek-v4.1-flash-1017,1,high,prompt_a,milestone_2,main,0.3500438853883535,0.0,57.5,0.0,87.5,87.5
+google/gemini-3.8-flash,1,medium,prompt_a,milestone_2,main,0.4039547041018038,0.0,100.0,0.0,83.75,83.75
+google/gemma-4-31b-it,1,off,prompt_a,milestone_2,main,0.48241474308815857,0.0,0.0,0.0,9.375,9.375
+google/gemma-4-31b-it,1,on,prompt_a,milestone_2,main,0.3748828926286765,0.0,50.0,7.5,71.25,63.75
+openai/gpt-6-luna,1,off,prompt_a,milestone_2,main,0.4014558384664713,42.5,50.0,48.75,34.375,26.875
+openai/gpt-6-luna,1,medium,prompt_a,milestone_2,main,0.33806840801142135,5.0,32.5,1.25,84.375,83.125
+qwen/qwen3.8-flash,1,off,prompt_a,milestone_2,main,0.4757881781429317,52.5,57.5,56.25,57.5,1.25
+qwen/qwen3.8-flash,1,medium,prompt_a,milestone_2,main,0.3357529497158389,0.0,75.0,10.625,81.25,70.625
+google/gemma-4-31b-it,1,default,prompt_a,milestone_2,earlier,0.48009992827334375,0.0,0.0,0.0,10.0,10.0
