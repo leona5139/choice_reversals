@@ -3,14 +3,17 @@
   "selection": "All players and rounds from milestone 2",
   "notes": "",
   "analysis_id": "milestone_2",
-  "timestamp": "2026-11-18T00:35:11.467188+00:00",
+  "timestamp": "2026-11-18T05:55:56.413804+00:00",
   "analysis_ids": [
     0,
     1,
     2,
     3,
     4,
-    5
+    5,
+    6,
+    7,
+    8
   ],
   "player_count": 920,
   "round_count": 7360,
@@ -936,7 +939,7 @@
     "2P2A_4AR|qwen/qwen3.8-flash|t=1|r=medium|prompt_a|18",
     "2P2A_4AR|qwen/qwen3.8-flash|t=1|r=medium|prompt_a|19"
   ],
-  "git_commit": "01690fa657a9007ebfc3ece8e1bd4048ca9b2652",
+  "git_commit": "fb58e3704fa40ab24984c02b7d8c8d71ebeb4be8",
   "files": [
     "decisions.csv",
     "00_overview.csv",
@@ -949,6 +952,14 @@
     "04_fig1_by_model.csv",
     "04_fig1_by_model.png",
     "05_fig3_by_model.csv",
-    "05_fig3_by_model.png"
+    "05_fig3_by_model.png",
+    "06_tvd_12_blocks.csv",
+    "06_tvd_12_blocks.png",
+    "06_tvd_6_blocks.csv",
+    "06_tvd_6_blocks.png",
+    "07_5_5_frames.csv",
+    "07_5_5_frames.png",
+    "08_5_5_revisions.csv",
+    "08_5_5_revisions.png"
   ]
 }

@@ -1,19 +1,24 @@
-"""Overview and choice distributions for Figures 1–3."""
-from collections import Counter
-from textwrap import fill
+"""Experiment figures and summary tables."""
+from collections import Counter, defaultdict
+from math import isnan, nan
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Patch, Rectangle
-from matplotlib.ticker import FuncFormatter, MultipleLocator
+from matplotlib.ticker import FuncFormatter, MultipleLocator, PercentFormatter
 
-from analysis.utils import CATEGORIES, MODEL_FIELDS, SETUP_FIELDS, group_rows, player_key, write_csv
+from analysis.process_human_benchmark import load_human_players
+from analysis.utils import (
+    CATEGORIES, MODEL_FIELDS, SETUP_FIELDS, choice_distribution, equal_split_summary, group_rows,
+    marginal_distribution, player_key, round_rows, total_variation, write_csv,
+)
 from simulation.treatments import tasks_in
 
 FIGURE_DPI = 320
-# Every label is two lines so a short name stays on the first line, beside its neighbors.
+COMPARISON_RED = "#a1421b"
 LABELS = ["Over-\ncompensating", "Ex ante\nequalizing", "Mixed\n", "Ex post\nequalizing", "Reinforcing\n"]
 CHOICE_FIELDS = ("treatment", "period", "category", "consistency",
                  "count", "percent", "n_players", "n_respondents", "n_choices")
@@ -24,11 +29,18 @@ def setup_label(setup):
     return f"{provider} / {model} | t={temperature} | r={reasoning} | {prompt_version}"
 
 
-def model_label(key):
-    model, temperature, reasoning, *source = key
-    label = f"{model} | t={temperature} | r={reasoning}"
-    details = "   ".join(f"{name}={value}" for name, value in zip(("prompt", "run"), source) if value)
-    return f"{label}\n{fill(details, width=44)}" if details else label
+def model_labels(setups):
+    show_prompt = len({prompt for _, _, _, prompt, _ in setups}) > 1
+    labels, settings = [], []
+    for model, temp, reasoning, prompt, run in setups:
+        label = f"{model} · {reasoning}"
+        if show_prompt:
+            label += f" · {prompt or 'unknown prompt'}"
+        labels.append(label)
+        settings.append(" · ".join(filter(None, (run, f"temperature {temp}"))))
+    if len(set(settings)) == 1:
+        return labels, settings[0]
+    return [f"{label}\n{setting}" for label, setting in zip(labels, settings)], ""
 
 
 def overview(rows, folder):
@@ -56,44 +68,9 @@ def overview(rows, folder):
     return [write_csv(folder / "00_overview.csv", table)]
 
 
-def choice_distribution(rows, with_consistency=False, by=()):
-    """Groups by treatment and period. Pass by=MODEL_FIELDS to split further."""
-    table = []
-    fields = (*by, "treatment", "period")
-    for key, group in group_rows(rows, fields).items():
-        choices = [r for r in group if r["initial_a"] is not None]
-        per_player = {}
-        for row in choices:
-            per_player.setdefault(player_key(row), Counter())[row["initial_category"]] += 1
-        counts = Counter()
-        for row in choices:
-            category = row["initial_category"]
-            own = per_player[player_key(row)]
-            consistency = own[category] / own.total() if with_consistency else None
-            counts[category, consistency] += 1
-        levels = sorted({level for _, level in counts if level is not None}) or [None]
-        for category in CATEGORIES:
-            for consistency in levels:
-                count = counts[category, consistency]
-                table.append({
-                    **dict(zip(fields, key)),
-                    "category": category,
-                    "consistency": consistency,
-                    "count": count,
-                    "percent": 100 * count / len(choices) if choices else None,
-                    "n_players": len({player_key(r) for r in group}),
-                    "n_respondents": len(per_player),
-                    "n_choices": len(choices),
-                })
-    return table
-
-
 def draw_panel(ax, records, title, levels=None, frame="A"):
     ax.set_title(title, fontsize=11)
-    ax.set_xticks(range(5))
-    ax.set_xticklabels(LABELS, fontsize=9)
-    for label in ax.get_xticklabels():
-        label.set_verticalalignment("top")
+    ax.set_xticks(range(len(LABELS)), LABELS, fontsize=9, va="top")
     ax.set_ylim(0, 100)
     ax.set_ylabel("Choices (%)", fontsize=9)
     ax.set_axisbelow(True)
@@ -118,7 +95,6 @@ MAIN_TREATMENTS = ("2A2P_4AR", "2P2A_4AR", "4A_4AR", "4P_4AR")
 
 
 def save_paper_figure(png, panels, figsize, top, legend_position):
-    """Use the panel layout and frequency scale of the published figures."""
     levels = sorted({0.25, 0.5, 0.75, 1.0} | {
         r["consistency"] for _, records in panels for r in records if r["consistency"] is not None
     })
@@ -163,15 +139,15 @@ def save_figure_1(table, png, suptitle, by=()):
         return
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
     groups = group_rows(table, by)
+    labels, settings = model_labels(groups)
     fig, axes = plt.subplots(len(groups), 2, figsize=(11, 2.8 * len(groups)), squeeze=False,
                              layout="constrained")
-    fig.suptitle(suptitle, fontsize=14)
-    for index, (key, group) in enumerate(groups.items()):
+    fig.suptitle(f"{suptitle}\n{settings}".rstrip(), fontsize=14)
+    for index, (label, group) in enumerate(zip(labels, groups.values())):
         for col, treatment in enumerate(FIG1_TREATMENTS):
             records = [r for r in group if r["treatment"] == treatment]
             n = records[0]["n_choices"] if records else 0
-            title = f"{treatment} | {n} choices"
-            title = f"{model_label(key)}\n{title}"
+            title = f"{label}\n{treatment} | {n} choices"
             draw_panel(axes[index, col], records, title, levels, frame="A" if col == 0 else "P")
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency within rounds 1–4", loc="outside lower center", ncol=4)
@@ -179,63 +155,23 @@ def save_figure_1(table, png, suptitle, by=()):
     plt.close(fig)
 
 
-def figure_1(rows, folder):
-    table = figure_1_choices(rows)
-    files = [write_csv(folder / "01_fig1_choices.csv", table, CHOICE_FIELDS)]
-    png = folder / "01_fig1_choices.png"
+def figure_1(rows, folder, by_model=False):
+    by = MODEL_FIELDS if by_model else ()
+    stem = "04_fig1_by_model" if by_model else "01_fig1_choices"
+    table = figure_1_choices(rows, by)
+    files = [write_csv(folder / f"{stem}.csv", table, (*by, *CHOICE_FIELDS))]
+    png = folder / f"{stem}.png"
     if not table:
         png.unlink(missing_ok=True)
-        print("Figure 1: no data for 4A_4AR or 4P_4AR.")
+        label = "Figure 1 by model" if by_model else "Figure 1"
+        print(f"{label}: no data for 4A_4AR or 4P_4AR.")
         return files
-    save_figure_1(table, png, "Figure 1: Initial choices in rounds 1–4")
+    save_figure_1(table, png, "Figure 1. Initial choices by model (rounds 1–4)", by)
     return files + [png]
 
 
 def figure_1_by_model(rows, folder):
-    by = MODEL_FIELDS
-    table = figure_1_choices(rows, by)
-    files = [write_csv(folder / "04_fig1_by_model.csv", table, (*by, *CHOICE_FIELDS))]
-    png = folder / "04_fig1_by_model.png"
-    if not table:
-        png.unlink(missing_ok=True)
-        print("Figure 1 by model: no data for 4A_4AR or 4P_4AR.")
-        return files
-    save_figure_1(table, png, "Figure 1. Initial choices by model, prompt version and run (rounds 1–4)", by)
-    return files + [png]
-
-
-def marginal_distribution(rows, category_field, *, changes_only=False):
-    """For changes, measure each player's consistency across all eligible responses."""
-    per_player = {}
-    for row in rows:
-        category = row[category_field]
-        if category is not None:
-            per_player.setdefault(player_key(row), Counter())[category] += 1
-    if changes_only:
-        rows = [r for r in rows if r["changed"] is True]
-    choices = [r for r in rows if r[category_field] is not None]
-    counts = Counter()
-    for row in choices:
-        category = row[category_field]
-        own = per_player[player_key(row)]
-        counts[category, own[category] / own.total()] += 1
-    levels = sorted({level for _, level in counts}) or [None]
-    n_players = len({player_key(r) for r in rows})
-    n_respondents = len({player_key(r) for r in choices})
-    table = []
-    for category in CATEGORIES:
-        for consistency in levels:
-            count = counts[category, consistency]
-            table.append({
-                "category": category,
-                "consistency": consistency,
-                "count": count,
-                "percent": 100 * count / len(choices) if choices else None,
-                "n_players": n_players,
-                "n_respondents": n_respondents,
-                "n_choices": len(choices),
-            })
-    return table
+    return figure_1(rows, folder, by_model=True)
 
 
 FIG3_PANELS = (
@@ -271,13 +207,16 @@ def figure_3(rows, folder, by_model=False):
         save_paper_figure(png, panels, (15, 7.5), 86, "best")
         return files + [png]
     levels = sorted({r["consistency"] for r in table if r["consistency"] is not None})
-    fig, axes = plt.subplots(len(groups), 3, figsize=(15, 2.8 * len(groups)), squeeze=False,
+    panel_groups = group_rows(table, by)
+    labels, settings = model_labels(panel_groups)
+    fig, axes = plt.subplots(len(panel_groups), 3, figsize=(15, 2.8 * len(panel_groups)), squeeze=False,
                              layout="constrained")
-    fig.suptitle("Figure 3. Original and final choices by model, prompt version and run (all treatments, rounds 5–8)", fontsize=14)
-    for row, (setup, group) in enumerate(group_rows(table, by).items()):
+    fig.suptitle(f"Figure 3. Original and final choices by model (all treatments, rounds 5–8)\n{settings}".rstrip(),
+                 fontsize=14)
+    for row, (label, group) in enumerate(zip(labels, panel_groups.values())):
         for col, (panel, _field, title) in enumerate(FIG3_PANELS):
             records = [r for r in group if r["panel"] == panel]
-            title = f"{model_label(setup)}\n{title} | {records[0]['n_choices']} choices"
+            title = f"{label}\n{title} | {records[0]['n_choices']} choices"
             draw_panel(axes[row, col], records, title, levels)
     handles = [Patch(facecolor=plt.cm.Greys(0.25 + 0.65 * level), label=f"{level:.0%}") for level in levels]
     fig.legend(handles=handles, title="Consistency", loc="outside lower center", ncol=4)
@@ -313,3 +252,137 @@ def figure_2(rows, folder):
     fig.savefig(png, dpi=FIGURE_DPI)
     plt.close(fig)
     return files + [png]
+
+
+BLOCKS_12 = [(t, p) for t in MAIN_TREATMENTS for p in ("1-2", "3-4", "5-8")]
+BLOCKS_6 = [(t, "1-4") for t in FIG1_TREATMENTS] + [(t, "5-8") for t in MAIN_TREATMENTS]
+
+
+def initial_counts(rows):
+    eligible = [r for r in rows if 1 <= r["round"] <= 8
+                and (r["task"] != "P" or r["draw_group"] == "participant")]
+    counts = defaultdict(Counter)
+    for entry in choice_distribution(eligible):
+        counts[entry["treatment"], entry["period"]][entry["category"]] = entry["count"]
+    for treatment in FIG1_TREATMENTS:
+        counts[treatment, "1-4"] = counts[treatment, "1-2"] + counts[treatment, "3-4"]
+    return counts
+
+
+def save_tvd_heatmap(path, setups, blocks, scores):
+    fig, ax = plt.subplots(figsize=(4.4 + 0.7 * len(blocks), 2.2 + 0.4 * len(setups)), layout="constrained")
+    reds = LinearSegmentedColormap.from_list("comparison_red", ["#fff8f5", COMPARISON_RED])
+    image = ax.imshow(scores, aspect="auto", cmap=reds.with_extremes(bad="0.9"),
+                      interpolation="nearest", vmin=0, vmax=1)
+    fig.suptitle(f"Initial choices vs. humans · {len(blocks)} blocks", fontsize=15)
+    labels, settings = model_labels(setups)
+    if settings:
+        ax.set_title(settings, loc="left", fontsize=10)
+    ax.set_yticks(range(len(setups)), labels, fontsize=10)
+    ax.set_ylabel("Model setting")
+    ax.set_xticks(range(len(blocks)), [f"{t.split('_')[0]}\n{p.replace('-', '–')}" for t, p in blocks], fontsize=10)
+    ax.set_xlabel("Treatment and rounds")
+    ax.tick_params(length=0, pad=5)
+    for i, row in enumerate(scores):
+        for j, value in enumerate(row):
+            ax.text(j, i, "—" if isnan(value) else f"{value:.2f}", ha="center", va="center",
+                    color="white" if value >= 0.84 else "black", fontsize=10)
+    fig.colorbar(image, ax=ax, shrink=0.75, label="TVD (lower is closer)")
+    fig.supxlabel("Five-category TVD = ½ Σ |model share − human share|  ·  Human data from Andreoni et al. (2020)",
+                  fontsize=9)
+    fig.savefig(path, dpi=FIGURE_DPI)
+    plt.close(fig)
+
+
+def initial_choice_tvd(rows, folder):
+    humans = initial_counts(round_rows(load_human_players()))
+    models = {setup: initial_counts(group) for setup, group in group_rows(rows, MODEL_FIELDS).items()}
+    files = []
+    for blocks in (BLOCKS_12, BLOCKS_6):
+        table, scores = [], []
+        for setup, counts in models.items():
+            row_scores = []
+            for treatment, period in blocks:
+                model = counts[treatment, period]
+                human = humans[treatment, period]
+                distance = total_variation(model, human)
+                row_scores.append(nan if distance is None else distance)
+                table.append({
+                    **dict(zip(MODEL_FIELDS, setup)), "treatment": treatment, "period": period,
+                    "model_choices": model.total(), "human_choices": human.total(), "tvd": distance,
+                    **{f"model_{c}": model[c] for c in CATEGORIES},
+                    **{f"human_{c}": human[c] for c in CATEGORIES},
+                })
+            scores.append(row_scores)
+        stem = f"06_tvd_{len(blocks)}_blocks"
+        files.append(write_csv(folder / f"{stem}.csv", table))
+        png = folder / f"{stem}.png"
+        save_tvd_heatmap(png, models, blocks, scores)
+        files.append(png)
+    return files
+
+
+def comparison_groups(rows):
+    humans = group_rows(round_rows(load_human_players()), MODEL_FIELDS)
+    return humans | group_rows(rows, MODEL_FIELDS)
+
+
+def save_equal_split(folder, stem, table, title, caption):
+    csv = write_csv(folder / f"{stem}.csv", table)
+    labels, settings = model_labels([tuple(r[k] for k in MODEL_FIELDS) for r in table[1:]])
+    fig, ax = plt.subplots(figsize=(10.7, 2 + 0.38 * len(table)), layout="constrained")
+    fig.suptitle(title, fontsize=15)
+    ax.axhspan(-0.45, 0.45, color="#eaf2f5", zorder=0)
+    ax.set_yticks(range(len(table)), ["Humans (Andreoni et al., 2020)", *labels], fontsize=10)
+    ax.get_yticklabels()[0].set_weight("bold")
+    ax.set_ylim(len(table) - 0.5, -0.5)
+    ax.set_xlim(-3, 103)
+    ax.set_xticks(range(0, 101, 20))
+    ax.xaxis.set_major_formatter(PercentFormatter(100, decimals=0))
+    ax.set_xlabel("Allocations at 5/5")
+    ax.grid(axis="x", color="0.9")
+    ax.set_axisbelow(True)
+    ax.tick_params(axis="y", length=0)
+    ax.spines[["top", "right", "left"]].set_visible(False)
+    ax.text(1.015, 1.015, "Change (pp)", transform=ax.transAxes, fontsize=9, weight="bold")
+    for i, row in enumerate(table):
+        ax.plot([row["first_percent"], row["second_percent"]], [i, i], color="0.64", lw=2)
+        delta = row["change_pp"]
+        ax.text(1.015, i, "—" if delta is None else f"{delta:+.1f}", transform=ax.get_yaxis_transform(),
+                va="center", fontsize=10, weight="bold" if i == 0 else "normal")
+    for prefix, size, fill, edge in (("first", 9, "white", "#234f67"), ("second", 5, COMPARISON_RED, COMPARISON_RED)):
+        ax.plot([r[f"{prefix}_percent"] for r in table], range(len(table)), linestyle="none", marker="o",
+                markersize=size, markerfacecolor=fill, markeredgecolor=edge, markeredgewidth=1.5,
+                label=table[0][f"{prefix}_stage"])
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncols=2, frameon=False)
+    fig.supxlabel("  ·  ".join(filter(None, (caption, settings))), fontsize=9)
+    png = folder / f"{stem}.png"
+    fig.savefig(png, dpi=FIGURE_DPI)
+    plt.close(fig)
+    return [csv, png]
+
+
+def equal_split_frames(rows, folder):
+    table = []
+    for setup, group in comparison_groups(rows).items():
+        initial = [r for r in group if 1 <= r["round"] <= 4 and r["initial_a"] is not None]
+        a = [r["initial_a"] for r in initial if r["treatment"] == "4A_4AR"]
+        p = [r["initial_a"] for r in initial if r["treatment"] == "4P_4AR" and r["draw_group"] == "participant"]
+        table.append(equal_split_summary(setup, ("4A · ex ante", a), ("4P · ex post", p)))
+    return save_equal_split(folder, "07_5_5_frames", table, "Initial 5/5 choices, rounds 1–4",
+                           "Separate groups. 4P includes only rounds the player’s group won.")
+
+
+def equal_split_revisions(rows, folder):
+    table = []
+    for setup, group in comparison_groups(rows).items():
+        offers = [r for r in group if r["treatment"] in MAIN_TREATMENTS and 5 <= r["round"] <= 8
+                  and r["revision_offered"] and r["initial_a"] is not None and r["revision_a"] is not None]
+        before = [r["initial_a"] for r in offers]
+        after = [r["revision_a"] for r in offers]
+        record = equal_split_summary(setup, ("Before reveal", before), ("After revision offer", after))
+        record["moved_to_5_5"] = sum(r["initial_a"] != 5 and r["revision_a"] == 5 for r in offers)
+        record["moved_from_5_5"] = sum(r["initial_a"] == 5 and r["revision_a"] != 5 for r in offers)
+        table.append(record)
+    return save_equal_split(folder, "08_5_5_revisions", table, "5/5 choices at revision, rounds 5–8",
+                           "Same revision offers across all four treatments")

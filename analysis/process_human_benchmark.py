@@ -16,6 +16,11 @@ PLAYERS = BENCHMARK / "processed" / "players.jsonl"
 TREATMENTS = {"EA": "4A_4AR", "EP": "4P_4AR", "EAEP": "2A2P_4AR", "EPEA": "2P2A_4AR"}
 
 
+def load_human_players():
+    with PLAYERS.open(encoding="utf-8") as file:
+        return [json.loads(line) for line in file]
+
+
 def allocation(value):
     if value in ("", "NA"):
         return None

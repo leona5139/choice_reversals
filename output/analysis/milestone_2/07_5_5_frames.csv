@@ -1,0 +1,14 @@
+model,temperature,reasoning,prompt_version,run_name,first_stage,first_choices,first_5_5,first_percent,second_stage,second_choices,second_5_5,second_percent,change_pp
+human,,,,human_replication,4A · ex ante,284,23,8.098591549295774,4P · ex post,144,62,43.05555555555556,34.95696400625978
+anthropic/claude-haiku-5.5,1,medium,prompt_a,milestone_2,4A · ex ante,80,32,40.0,4P · ex post,40,14,35.0,-5.0
+anthropic/claude-haiku-5.5,1,off,prompt_a,milestone_2,4A · ex ante,80,80,100.0,4P · ex post,40,34,85.0,-15.0
+deepseek/deepseek-v4.1-flash-1017,1,high,prompt_a,milestone_2,4A · ex ante,80,0,0.0,4P · ex post,40,23,57.5,57.5
+deepseek/deepseek-v4.1-flash-1017,1,off,prompt_a,milestone_2,4A · ex ante,80,38,47.5,4P · ex post,40,22,55.0,7.5
+google/gemini-3.8-flash,1,medium,prompt_a,milestone_2,4A · ex ante,80,0,0.0,4P · ex post,40,40,100.0,100.0
+google/gemma-4-31b-it,1,default,prompt_a,milestone_2,4A · ex ante,40,0,0.0,4P · ex post,20,0,0.0,0.0
+google/gemma-4-31b-it,1,off,prompt_a,milestone_2,4A · ex ante,80,0,0.0,4P · ex post,40,0,0.0,0.0
+google/gemma-4-31b-it,1,on,prompt_a,milestone_2,4A · ex ante,80,0,0.0,4P · ex post,40,20,50.0,50.0
+openai/gpt-6-luna,1,medium,prompt_a,milestone_2,4A · ex ante,80,4,5.0,4P · ex post,40,13,32.5,27.5
+openai/gpt-6-luna,1,off,prompt_a,milestone_2,4A · ex ante,80,34,42.5,4P · ex post,40,20,50.0,7.5
+qwen/qwen3.8-flash,1,medium,prompt_a,milestone_2,4A · ex ante,80,0,0.0,4P · ex post,40,30,75.0,75.0
+qwen/qwen3.8-flash,1,off,prompt_a,milestone_2,4A · ex ante,80,42,52.5,4P · ex post,40,23,57.5,5.0

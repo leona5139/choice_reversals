@@ -13,11 +13,10 @@ ANALYSIS_IDS = [
     3,  # Figure 3. Initial choices, eligible final choices, and changes across treatments, rounds 5–8
     4,  # Figure 1 by model setting, prompt version, and run
     5,  # Figure 3 by model setting, prompt version, and run
+    6,  # Initial-choice TVD against humans, with 12-block and 6-block heatmaps
+    7,  # Share choosing 5/5 in 4A and 4P, rounds 1–4
+    8,  # Share choosing 5/5 before and after a revision offer, rounds 5–8
 ]
-# Planned comparisons with humans
-# 6. Heatmap of five-category initial-choice TVD by model, treatment, and round block
-# 7. Share choosing 5/5 in 4A versus 4P, rounds 1–4
-# 8. Share choosing 5/5 before and after an eligible revision, rounds 5–8
 
 METADATA = {
     "title": "Milestone 2 analysis",

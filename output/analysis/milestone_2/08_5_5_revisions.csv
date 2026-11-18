@@ -1,0 +1,14 @@
+model,temperature,reasoning,prompt_version,run_name,first_stage,first_choices,first_5_5,first_percent,second_stage,second_choices,second_5_5,second_percent,change_pp,moved_to_5_5,moved_from_5_5
+human,,,,human_replication,Before reveal,478,32,6.694560669456067,After revision offer,478,269,56.27615062761506,49.58158995815899,243,6
+anthropic/claude-haiku-5.5,1,medium,prompt_a,milestone_2,Before reveal,160,103,64.375,After revision offer,160,116,72.5,8.125,30,17
+anthropic/claude-haiku-5.5,1,off,prompt_a,milestone_2,Before reveal,160,155,96.875,After revision offer,160,155,96.875,0.0,0,0
+deepseek/deepseek-v4.1-flash-1017,1,high,prompt_a,milestone_2,Before reveal,160,0,0.0,After revision offer,160,140,87.5,87.5,140,0
+deepseek/deepseek-v4.1-flash-1017,1,off,prompt_a,milestone_2,Before reveal,160,50,31.25,After revision offer,160,49,30.625,-0.625,4,5
+google/gemini-3.8-flash,1,medium,prompt_a,milestone_2,Before reveal,160,0,0.0,After revision offer,160,134,83.75,83.75,134,0
+google/gemma-4-31b-it,1,default,prompt_a,milestone_2,Before reveal,80,0,0.0,After revision offer,80,8,10.0,10.0,8,0
+google/gemma-4-31b-it,1,off,prompt_a,milestone_2,Before reveal,160,0,0.0,After revision offer,160,15,9.375,9.375,15,0
+google/gemma-4-31b-it,1,on,prompt_a,milestone_2,Before reveal,160,12,7.5,After revision offer,160,114,71.25,63.75,102,0
+openai/gpt-6-luna,1,medium,prompt_a,milestone_2,Before reveal,160,2,1.25,After revision offer,160,135,84.375,83.125,133,0
+openai/gpt-6-luna,1,off,prompt_a,milestone_2,Before reveal,160,78,48.75,After revision offer,160,55,34.375,-14.375,9,32
+qwen/qwen3.8-flash,1,medium,prompt_a,milestone_2,Before reveal,160,17,10.625,After revision offer,160,130,81.25,70.625,113,0
+qwen/qwen3.8-flash,1,off,prompt_a,milestone_2,Before reveal,160,90,56.25,After revision offer,160,92,57.5,1.25,2,0

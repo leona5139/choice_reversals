@@ -1,9 +1,8 @@
 """Run with: uv run python -m analysis.run_analysis.human_replication"""
-import json
 from pathlib import Path
 
 from analysis.handler import run_analysis
-from analysis.process_human_benchmark import PLAYERS, RAW_SESSIONS
+from analysis.process_human_benchmark import PLAYERS, RAW_SESSIONS, load_human_players
 
 ANALYSIS_IDS = [
     1,  # Figure 1. Initial choices in 4A and 4P
@@ -20,8 +19,7 @@ METADATA = {
 def main():
     if not PLAYERS.is_file():
         raise SystemExit(f"Missing {PLAYERS}. Run uv run python -m analysis.process_human_benchmark first.")
-    with PLAYERS.open(encoding="utf-8") as file:
-        players = [json.loads(line) for line in file]
+    players = load_human_players()
     run_analysis(players, Path(__file__).stem, METADATA, ANALYSIS_IDS)
 
 

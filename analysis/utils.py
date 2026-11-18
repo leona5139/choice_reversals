@@ -1,8 +1,8 @@
-"""Shared choice categories and one-row-per-player-round data."""
+"""Round records and choice statistics."""
+from collections import Counter
 import csv
 
 SETUP_FIELDS = ("provider", "model", "temperature", "reasoning", "prompt_version")
-# Splits for the by-model figures. Players saved before reasoning was recorded count as "default".
 MODEL_FIELDS = ("model", "temperature", "reasoning", "prompt_version", "run_name")
 PLAYER_FIELDS = ("run_name", "player_id", "player_number", "treatment", *SETUP_FIELDS)
 CATEGORIES = (
@@ -73,6 +73,71 @@ def group_rows(rows, fields):
                     for field in fields)
         groups.setdefault(key, []).append(row)
     return dict(sorted(groups.items(), key=lambda item: tuple(str(v) for v in item[0])))
+
+
+def marginal_distribution(rows, category_field, *, changes_only=False, with_consistency=True):
+    """For changes, measure each player's consistency across all eligible responses."""
+    per_player = {}
+    for row in rows:
+        category = row[category_field]
+        if category is not None:
+            per_player.setdefault(player_key(row), Counter())[category] += 1
+    if changes_only:
+        rows = [r for r in rows if r["changed"] is True]
+    choices = [r for r in rows if r[category_field] is not None]
+    counts = Counter()
+    for row in choices:
+        category = row[category_field]
+        own = per_player[player_key(row)]
+        level = own[category] / own.total() if with_consistency else None
+        counts[category, level] += 1
+    levels = sorted({level for _, level in counts}) or [None]
+    n_players = len({player_key(r) for r in rows})
+    n_respondents = len({player_key(r) for r in choices})
+    table = []
+    for category in CATEGORIES:
+        for consistency in levels:
+            count = counts[category, consistency]
+            table.append({
+                "category": category,
+                "consistency": consistency,
+                "count": count,
+                "percent": 100 * count / len(choices) if choices else None,
+                "n_players": n_players,
+                "n_respondents": n_respondents,
+                "n_choices": len(choices),
+            })
+    return table
+
+
+def choice_distribution(rows, with_consistency=False, by=()):
+    fields = (*by, "treatment", "period")
+    table = []
+    for key, group in group_rows(rows, fields).items():
+        labels = dict(zip(fields, key))
+        distribution = marginal_distribution(group, "initial_category", with_consistency=with_consistency)
+        table.extend({**labels, **record} for record in distribution)
+    return table
+
+
+def total_variation(model, human):
+    n_model, n_human = model.total(), human.total()
+    if not n_model or not n_human:
+        return None
+    return 0.5 * sum(abs(model[c] / n_model - human[c] / n_human) for c in CATEGORIES)
+
+
+def equal_split_summary(setup, first, second):
+    result = dict(zip(MODEL_FIELDS, setup))
+    for prefix, (stage, choices) in (("first", first), ("second", second)):
+        even = choices.count(5)
+        result[f"{prefix}_stage"] = stage
+        result[f"{prefix}_choices"] = len(choices)
+        result[f"{prefix}_5_5"] = even
+        result[f"{prefix}_percent"] = 100 * even / len(choices) if choices else None
+    a, b = result["first_percent"], result["second_percent"]
+    result["change_pp"] = b - a if a is not None and b is not None else None
+    return result
 
 
 def write_csv(path, rows, fields=None):

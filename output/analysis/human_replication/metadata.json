@@ -3,7 +3,7 @@
   "source": "human_benchmark/raw/code and data files/data/de-identified",
   "player_data": "human_benchmark/processed/players.jsonl",
   "analysis_id": "human_replication",
-  "timestamp": "2026-11-18T00:35:07.331451+00:00",
+  "timestamp": "2026-11-18T05:43:11.580118+00:00",
   "analysis_ids": [
     1,
     2,
@@ -252,7 +252,7 @@
     "R_3JA4zMWsWACCHqd",
     "R_0JpeXPM6PoV3LWR"
   ],
-  "git_commit": "01690fa657a9007ebfc3ece8e1bd4048ca9b2652",
+  "git_commit": "fb58e3704fa40ab24984c02b7d8c8d71ebeb4be8",
   "files": [
     "decisions.csv",
     "01_fig1_choices.csv",
