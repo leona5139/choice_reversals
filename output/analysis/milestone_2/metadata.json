@@ -3,8 +3,8 @@
   "selection": "All players and rounds from milestone 2",
   "notes": "",
   "analysis_id": "milestone_2",
-  "timestamp": "2026-11-16T22:58:03.928370+00:00",
-  "analysis_order": [
+  "timestamp": "2026-11-18T00:35:11.467188+00:00",
+  "analysis_ids": [
     0,
     1,
     2,
@@ -13,6 +13,7 @@
     5
   ],
   "player_count": 920,
+  "round_count": 7360,
   "player_ids": [
     "4A_4AR|google/gemma-4-31b-it|t=1|prompt_a|2",
     "4A_4AR|google/gemma-4-31b-it|t=1|prompt_a|1",
@@ -935,7 +936,7 @@
     "2P2A_4AR|qwen/qwen3.8-flash|t=1|r=medium|prompt_a|18",
     "2P2A_4AR|qwen/qwen3.8-flash|t=1|r=medium|prompt_a|19"
   ],
-  "git_commit": "0792815b3bc263ada47f5c661eaa22fb69de2788",
+  "git_commit": "01690fa657a9007ebfc3ece8e1bd4048ca9b2652",
   "files": [
     "decisions.csv",
     "00_overview.csv",
