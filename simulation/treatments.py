@@ -2,10 +2,11 @@
 
 Print an outline with `uv run python -m simulation.treatments 2A2P_4AR`.
 """
+import json
 import re
 import sys
+from pathlib import Path
 
-TREATMENTS = ["4A_4AR", "4P_4AR", "2A2P_4AR", "2P2A_4AR"]
 SHOW_OUTCOMES = True
 
 
@@ -18,6 +19,26 @@ def tasks_in(treatment):
     if not tasks:
         raise ValueError(f"cannot read treatment {treatment!r}")
     return tasks
+
+
+def load_instances():
+    """Read the four main conditions and the Table 3 computer allocations."""
+    path = Path(__file__).with_name("instances.json")
+    with path.open(encoding="utf-8") as stream:
+        data = json.load(stream)
+    names = data["treatments"]
+    tickets = data["computer_tickets_to_a"]
+    if len(tickets) != 8 or any(type(n) is not int or not 0 <= n <= 10 for n in tickets):
+        raise ValueError(f"{path}: expected eight integer allocations of 0 to 10 tickets")
+    if not names or len(names) != len(set(names)):
+        raise ValueError(f"{path}: treatment names must be present and unique")
+    for name in names:
+        if not re.fullmatch(r"(?:[1-9]\d*(?:A|P))+_[1-9]\d*AR", name) or len(tasks_in(name)) != len(tickets):
+            raise ValueError(f"{path}: invalid eight-round treatment {name!r}")
+    return names, tickets
+
+
+TREATMENTS, COMPUTER_TICKETS_TO_A = load_instances()
 
 
 def step(kind, round_number=None, slot=None, only_if_winner=None):

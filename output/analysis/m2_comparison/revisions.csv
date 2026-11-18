@@ -1,0 +1,66 @@
+setting,condition,eligible,initial_equal,final_equal,changes,changes_to_equal,share_initial_equal,share_final_equal,difference_final_minus_initial,share_changed,share_of_changes_to_equal
+Human,4A_4AR,142,10,75,97,69,0.07042253521126761,0.528169014084507,0.45774647887323944,0.6830985915492958,0.711340206185567
+Human,4P_4AR,144,5,84,100,80,0.034722222222222224,0.5833333333333334,0.5486111111111112,0.6944444444444444,0.8
+Human,2A2P_4AR,96,6,65,67,60,0.0625,0.6770833333333334,0.6145833333333334,0.6979166666666666,0.8955223880597015
+Human,2P2A_4AR,96,11,45,51,34,0.11458333333333333,0.46875,0.3541666666666667,0.53125,0.6666666666666666
+Human,equal_condition_mean,478,32,269,315,243,0.07055702269170579,0.5643339201877935,0.49377689749608766,0.6516774256651017,0.7683823152279838
+anthropic/claude-haiku-5.5 [medium],4A_4AR,40,26,29,15,9,0.65,0.725,0.075,0.375,0.6
+anthropic/claude-haiku-5.5 [medium],4P_4AR,40,21,23,12,7,0.525,0.575,0.05,0.3,0.5833333333333334
+anthropic/claude-haiku-5.5 [medium],2A2P_4AR,40,23,27,10,7,0.575,0.675,0.1,0.25,0.7
+anthropic/claude-haiku-5.5 [medium],2P2A_4AR,40,33,37,10,7,0.825,0.925,0.1,0.25,0.7
+anthropic/claude-haiku-5.5 [medium],equal_condition_mean,160,103,116,47,30,0.64375,0.725,0.08125,0.29375,0.6458333333333333
+anthropic/claude-haiku-5.5 [off],4A_4AR,40,40,40,0,0,1.0,1.0,0.0,0.0,
+anthropic/claude-haiku-5.5 [off],4P_4AR,40,40,40,0,0,1.0,1.0,0.0,0.0,
+anthropic/claude-haiku-5.5 [off],2A2P_4AR,40,37,37,0,0,0.925,0.925,0.0,0.0,
+anthropic/claude-haiku-5.5 [off],2P2A_4AR,40,38,38,0,0,0.95,0.95,0.0,0.0,
+anthropic/claude-haiku-5.5 [off],equal_condition_mean,160,155,155,0,0,0.96875,0.96875,0.0,0.0,
+deepseek/deepseek-v4.1-flash-1017 [high],4A_4AR,40,0,35,35,35,0.0,0.875,0.875,0.875,1.0
+deepseek/deepseek-v4.1-flash-1017 [high],4P_4AR,40,0,33,33,33,0.0,0.825,0.825,0.825,1.0
+deepseek/deepseek-v4.1-flash-1017 [high],2A2P_4AR,40,0,32,32,32,0.0,0.8,0.8,0.8,1.0
+deepseek/deepseek-v4.1-flash-1017 [high],2P2A_4AR,40,0,40,40,40,0.0,1.0,1.0,1.0,1.0
+deepseek/deepseek-v4.1-flash-1017 [high],equal_condition_mean,160,0,140,140,140,0.0,0.875,0.875,0.875,1.0
+deepseek/deepseek-v4.1-flash-1017 [off],4A_4AR,40,17,15,7,0,0.425,0.375,-0.05,0.175,0.0
+deepseek/deepseek-v4.1-flash-1017 [off],4P_4AR,40,9,9,6,2,0.225,0.225,0.0,0.15,0.3333333333333333
+deepseek/deepseek-v4.1-flash-1017 [off],2A2P_4AR,40,17,18,9,2,0.425,0.45,0.025,0.225,0.2222222222222222
+deepseek/deepseek-v4.1-flash-1017 [off],2P2A_4AR,40,7,7,3,0,0.175,0.175,0.0,0.075,0.0
+deepseek/deepseek-v4.1-flash-1017 [off],equal_condition_mean,160,50,49,25,4,0.3125,0.30625,-0.00625,0.15625,0.1388888888888889
+google/gemini-3.8-flash [medium],4A_4AR,40,0,20,20,20,0.0,0.5,0.5,0.5,1.0
+google/gemini-3.8-flash [medium],4P_4AR,40,0,40,40,40,0.0,1.0,1.0,1.0,1.0
+google/gemini-3.8-flash [medium],2A2P_4AR,40,0,36,36,36,0.0,0.9,0.9,0.9,1.0
+google/gemini-3.8-flash [medium],2P2A_4AR,40,0,38,38,38,0.0,0.95,0.95,0.95,1.0
+google/gemini-3.8-flash [medium],equal_condition_mean,160,0,134,134,134,0.0,0.8375,0.8375,0.8375,1.0
+google/gemma-4-31b-it [off],4A_4AR,40,0,15,15,15,0.0,0.375,0.375,0.375,1.0
+google/gemma-4-31b-it [off],4P_4AR,40,0,0,0,0,0.0,0.0,0.0,0.0,
+google/gemma-4-31b-it [off],2A2P_4AR,40,0,0,0,0,0.0,0.0,0.0,0.0,
+google/gemma-4-31b-it [off],2P2A_4AR,40,0,0,0,0,0.0,0.0,0.0,0.0,
+google/gemma-4-31b-it [off],equal_condition_mean,160,0,15,15,15,0.0,0.09375,0.09375,0.09375,
+google/gemma-4-31b-it [on],4A_4AR,40,0,30,30,30,0.0,0.75,0.75,0.75,1.0
+google/gemma-4-31b-it [on],4P_4AR,40,12,29,17,17,0.3,0.725,0.425,0.425,1.0
+google/gemma-4-31b-it [on],2A2P_4AR,40,0,31,31,31,0.0,0.775,0.775,0.775,1.0
+google/gemma-4-31b-it [on],2P2A_4AR,40,0,24,24,24,0.0,0.6,0.6,0.6,1.0
+google/gemma-4-31b-it [on],equal_condition_mean,160,12,114,102,102,0.075,0.7125,0.6375,0.6375,1.0
+openai/gpt-6-luna [medium],4A_4AR,40,0,35,35,35,0.0,0.875,0.875,0.875,1.0
+openai/gpt-6-luna [medium],4P_4AR,40,2,31,29,29,0.05,0.775,0.725,0.725,1.0
+openai/gpt-6-luna [medium],2A2P_4AR,40,0,38,38,38,0.0,0.95,0.95,0.95,1.0
+openai/gpt-6-luna [medium],2P2A_4AR,40,0,31,31,31,0.0,0.775,0.775,0.775,1.0
+openai/gpt-6-luna [medium],equal_condition_mean,160,2,135,133,133,0.0125,0.84375,0.83125,0.83125,1.0
+openai/gpt-6-luna [off],4A_4AR,40,11,9,8,3,0.275,0.225,-0.05,0.2,0.375
+openai/gpt-6-luna [off],4P_4AR,40,23,11,14,0,0.575,0.275,-0.3,0.35,0.0
+openai/gpt-6-luna [off],2A2P_4AR,40,10,14,8,6,0.25,0.35,0.1,0.2,0.75
+openai/gpt-6-luna [off],2P2A_4AR,40,34,21,13,0,0.85,0.525,-0.325,0.325,0.0
+openai/gpt-6-luna [off],equal_condition_mean,160,78,55,43,9,0.4875,0.34375,-0.14375,0.26875,0.28125
+qwen/qwen3.8-flash [medium],4A_4AR,40,0,35,35,35,0.0,0.875,0.875,0.875,1.0
+qwen/qwen3.8-flash [medium],4P_4AR,40,16,35,19,19,0.4,0.875,0.475,0.475,1.0
+qwen/qwen3.8-flash [medium],2A2P_4AR,40,0,31,31,31,0.0,0.775,0.775,0.775,1.0
+qwen/qwen3.8-flash [medium],2P2A_4AR,40,1,29,28,28,0.025,0.725,0.7,0.7,1.0
+qwen/qwen3.8-flash [medium],equal_condition_mean,160,17,130,113,113,0.10625000000000001,0.8125,0.70625,0.70625,1.0
+qwen/qwen3.8-flash [off],4A_4AR,40,20,20,0,0,0.5,0.5,0.0,0.0,
+qwen/qwen3.8-flash [off],4P_4AR,40,20,21,1,1,0.5,0.525,0.025,0.025,1.0
+qwen/qwen3.8-flash [off],2A2P_4AR,40,27,27,0,0,0.675,0.675,0.0,0.0,
+qwen/qwen3.8-flash [off],2P2A_4AR,40,23,24,1,1,0.575,0.6,0.025,0.025,1.0
+qwen/qwen3.8-flash [off],equal_condition_mean,160,90,92,2,2,0.5625,0.575,0.0125,0.0125,
+google/gemma-4-31b-it [default],4A_4AR,20,0,4,4,4,0.0,0.2,0.2,0.2,1.0
+google/gemma-4-31b-it [default],4P_4AR,20,0,0,0,0,0.0,0.0,0.0,0.0,
+google/gemma-4-31b-it [default],2A2P_4AR,20,0,4,4,4,0.0,0.2,0.2,0.2,1.0
+google/gemma-4-31b-it [default],2P2A_4AR,20,0,0,0,0,0.0,0.0,0.0,0.0,
+google/gemma-4-31b-it [default],equal_condition_mean,80,0,8,8,8,0.0,0.1,0.1,0.1,

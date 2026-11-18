@@ -1,6 +1,6 @@
 """Game rules. Tickets 1-10 belong to the participant, 11-20 to the computer."""
 
-COMPUTER_TICKETS_TO_A = [7, 2, 10, 1, 8, 3, 9, 0]  # rounds 1-8, from Table 3 of the paper
+from simulation.treatments import COMPUTER_TICKETS_TO_A
 
 ROUNDS_PER_BLOCK = 4
 PARTICIPANT_WINS_PER_BLOCK = 2 

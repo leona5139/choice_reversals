@@ -1,0 +1,14 @@
+setting,n_4A,equal_4A,share_4A,n_4P,equal_4P,share_4P,difference_4P_minus_4A
+Human,284,23,0.08098591549295775,144,62,0.4305555555555556,0.34956964006259783
+anthropic/claude-haiku-5.5 [medium],80,32,0.4,40,14,0.35,-0.050000000000000044
+anthropic/claude-haiku-5.5 [off],80,80,1.0,40,34,0.85,-0.15000000000000002
+deepseek/deepseek-v4.1-flash-1017 [high],80,0,0.0,40,23,0.575,0.575
+deepseek/deepseek-v4.1-flash-1017 [off],80,38,0.475,40,22,0.55,0.07500000000000007
+google/gemini-3.8-flash [medium],80,0,0.0,40,40,1.0,1.0
+google/gemma-4-31b-it [off],80,0,0.0,40,0,0.0,0.0
+google/gemma-4-31b-it [on],80,0,0.0,40,20,0.5,0.5
+openai/gpt-6-luna [medium],80,4,0.05,40,13,0.325,0.275
+openai/gpt-6-luna [off],80,34,0.425,40,20,0.5,0.07500000000000001
+qwen/qwen3.8-flash [medium],80,0,0.0,40,30,0.75,0.75
+qwen/qwen3.8-flash [off],80,42,0.525,40,23,0.575,0.04999999999999993
+google/gemma-4-31b-it [default],40,0,0.0,20,0,0.0,0.0
