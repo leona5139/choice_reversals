@@ -6,8 +6,8 @@
 \usepackage{booktabs,graphicx,array,hyperref}
 \hypersetup{hidelinks,pdftitle={Group 4 - Milestone 2 - Choice reversals in household lotteries},pdfauthor={Ishan Shivansh Bangroo, Zhi-Hong Jian, Tara Liu, Leona Pierce}}
 \urlstyle{same}
-\setlength{\parindent}{0pt}\setlength{\parskip}{4.5pt}
-\newcommand{\head}[1]{\par\vspace{2pt}\noindent\textbf{#1}\hspace{.3em}}
+\setlength{\parindent}{0pt}\setlength{\parskip}{3pt}
+\newcommand{\head}[1]{\par\vspace{1pt}\noindent\textbf{#1}\hspace{.3em}}
 \newcommand{\titleline}[1]{{\LARGE\bfseries #1\par}\vspace{3pt}}
 \newcommand{\subline}[1]{{\large\bfseries #1\par}}
 \newcommand{\analysispath}{output/analysis/milestone_2}
@@ -17,23 +17,23 @@
 \titleline{Choice reversals in household lotteries}
 Ishan Shivansh Bangroo\quad Zhi-Hong Jian\quad Tara Liu\quad Leona Pierce\footnote{\scriptsize\textbf{Contributions.} Leona collected the first M2 runs and suggested the counterfactual revision test. Zhi-Hong extended the runs, assembled the human benchmark and proposed the three analyses. Tara helped develop the baseline prompts and suggested total variation distance. Ishan specified the revision measures and prepared the comparison tables and report.}
 
-\head{Question and sample.} Do models revise ticket allocations as people do once they learn that their tickets decide the donation? We compared 239 participants in Andreoni et al.\ (2020) with 880 model conversations across 11 settings. Each player divided ten tickets between two households. Before the draw, players could offset the computer's unequal split. After learning that their own tickets determined the winner, a 5/5 split gave each household an equal chance.
+\head{Question and sample.} Do models revise ticket allocations as people do once they learn that their tickets decide the donation? We compared 239 participants in Andreoni et al.\ (2020) with 880 model conversations across 11 settings. Players divided ten tickets between two households, which already held an unequal computer allocation. A 5/5 split equalized chances once the player's tickets determined the winner.
 
-\head{Three comparisons.} Total variation distance (TVD) compares the five initial allocation categories. It is half the sum of absolute differences in category shares. Zero means an exact match. The six equally weighted blocks cover rounds 1--4 of the pure before-draw (4A) and after-reveal (4P) conditions, and rounds 5--8 of all four conditions. The 4A and 4P columns compare separate groups. Only observed choices enter the rates. The final three columns follow the same revision opportunities and weight each condition equally. ``Changed'' counts any change in allocation.
+\head{Three comparisons.} Total variation distance (TVD) compares the five initial allocation categories. It is half the sum of absolute differences in category shares. Zero means an exact match and one means no overlap. The six equally weighted blocks cover rounds 1--4 of the pure before-draw (4A) and after-reveal (4P) conditions, and rounds 5--8 of all four conditions. The 4A and 4P columns compare separate groups. Only observed choices enter the rates. The final three columns follow the same revision opportunities and weight each condition equally. ``Changed'' counts any change in allocation.
 
 {\centering\small\setlength{\tabcolsep}{5.25pt}\renewcommand{\arraystretch}{1.03}
 \def\plannedonly{}\input{\analysispath/09_summary_6_blocks.tex}\par}
 
-\head{Findings.} Humans chose 5/5 on 23 of 284 initial choices in 4A and 62 of 144 in 4P. On eligible rounds, their 5/5 rate rose from 7.1\% to 56.4\% after the reveal. Eight of 11 settings chose 5/5 more often in 4P than in 4A. Eight increased after the reveal. Six showed both human patterns. Across six blocks, DeepSeek at high reasoning came closest on initial choices (mean TVD 0.315), yet its eligible 5/5 rate rose from 0\% to 87.5\%. All 102 Gemma changes with reasoning on ended at 5/5. Pooling the four human conditions gives 315 changes in 478 offers (65.9\%), with 243 ending at 5/5. These are descriptive comparisons of repeated choices.
+\head{Findings.} We aim to replicate two human findings. Humans chose 5/5 on 23 of 284 initial choices in 4A and 62 of 144 in 4P, and their eligible 5/5 rate rose from 7.1\% to 56.4\% after the reveal. Eight of 11 settings chose 5/5 more often in 4P than in 4A. Eight increased after the reveal. Six had both directions; Qwen with reasoning off increased only 1.3 percentage points after the reveal. In all five models run both ways, the requested-reasoning setting had a higher changed share (off 0.0 to 26.9\%, requested 29.4 to 87.5\%, humans 65.2\%). DeepSeek at high reasoning had the lowest mean TVD (0.315), yet its eligible 5/5 rate rose from 0\% to 87.5\%, above the human 56.4\%. These are descriptive comparisons of repeated choices.
 
-\head{Interpretation.} Haiku with reasoning off kept all 160 eligible allocations. Only five started unequal. Holding the model and draws fixed, we could compare the original prompt, confirmation alone, and confirmation with the winning probabilities shown. Since no money changed hands, we could also test whether calling the donation hypothetical affects choices.
+\head{Interpretation.} One possible source of human--model differences is that the human revision screen stated winning chances, while our prompt leaves them to be worked out. Holding the model and draws fixed, we could compare the original prompt, confirmation alone, and confirmation with the winning chances shown. Haiku with reasoning off kept all 160 eligible allocations, but only five started unequal. Since no money changed hands, we could test whether calling the donation hypothetical affects choices.
 
-\head{Next step.} On a small subset, we will test new prompts, fuller descriptions of the lottery images, and temperature 2 separately. For the counterfactual test, we will show the model someone else's unequal split in a fresh chat. We will tell it that its group has the winning ticket and give it one chance to keep or change the split.
+\head{Next step.} On a small sample, we will separately test fuller image descriptions, wording and another supported temperature. A fresh chat will also present someone else's unequal split, reveal that the player's tickets decide the winner and offer one revision.
 
 \newpage
 {\small IST 597-005\quad Group 4\quad Milestone 2}\par
 \titleline{Appendix A. Experiment and API setup}
-\head{Design.} Rounds 1--4 were four A, four P, two A then two P, or two P then two A. In A the player allocated before learning which set held the winning ticket. In P a player made a choice only if their own set won. In rounds 5--8, all four allocations preceded the first reveal. Each player then had two opportunities to keep or change an allocation. Each conversation kept its own history. The computer gave household A 7, 2, 10, 1, 8, 3, 9 and 0 tickets in successive rounds. The code balanced wins within four-round blocks and seeded draws by run, condition and player number, sharing draws across model settings.
+\head{Design.} Rounds 1--4 were four A, four P, two A then two P, or two P then two A. In A the player allocated before learning which set held the winning ticket. In P a player made a choice only if their own set won. In rounds 5--8, all four allocations preceded the first reveal. Each player then had two opportunities to keep or change an allocation. Each conversation kept its own history. The computer gave household A 7, 2, 10, 1, 8, 3, 9 and 0 tickets in successive rounds. The code balanced wins within four-round blocks and seeded draws by run, condition and player number, sharing draws across model settings. The human sessions show the same balance for all 239 people.
 
 \head{Interface.} We called \url{https://openrouter.ai/api/v1/chat/completions}. The OpenRouter client reads \texttt{OPENROUTER\_API\_KEY} from the environment or local \texttt{.env} and sends it as a bearer credential. Requests supplied the model identifier, conversation messages and temperature 1.0. For reasoning, on/off supplied an enabled flag, medium/high supplied an effort level, and default omitted the override. These are requested settings. The saved histories do not establish which internal computation a provider used.
 
@@ -50,22 +50,22 @@ Model identifier in the records & Reasoning requested\\\midrule
 
 \head{Records and checks.} Each main setting has 20 conversations per condition. Another 40 Gemma conversations used the default reasoning setting (10 per condition). Appendices B and C identify that earlier sample as Gemma default. The parser reads the last JSON object and accepts two whole, nonnegative counts summing to ten. The runner allows up to four attempts per question. Of the 8,246 accepted replies across all 920 records, 1,758 contained text outside the requested standalone object. All saved replies parsed to the recorded allocations. The full request-attempt log is unavailable.
 
-\head{Human data.} We used ten de-identified sessions in the journal's replication archive. The four conditions contained 71, 72, 48 and 48 people respectively, in the order listed above. The survey recorded tickets for B, so we subtracted each observed count from ten to obtain tickets for A. Skipped P rounds had no participant allocation. We classified decisions as overcompensating, ex ante equalizing, mixed, 5/5 or reinforcing, relative to the computer's split.
+\head{Human data.} We used ten de-identified sessions in the journal's replication archive. The four conditions contained 71, 72, 48 and 48 people respectively, in the order listed above. The survey recorded tickets for B, so we subtracted each observed count from ten to obtain tickets for A. Skipped P rounds had no participant allocation. We classified decisions as overcompensating, ex ante equalizing, mixed, 5/5 or reinforcing, relative to the computer's split. The session files also keep the page text. After a participant win in rounds 5--8, the revision page stated each household's chance of winning out of ten.
 
 \head{Reproduction.} From the repository root, install dependencies with \texttt{uv sync}, then run
 \par{\small\ttfamily uv run python -m analysis.run\_analysis.milestone\_2\par}
-The analysis reads \path{output/results/milestone_2/players.jsonl} and \path{human_benchmark/processed/players.jsonl}. It writes the figures, CSVs and LaTeX tables in \path{output/analysis/milestone_2/}. To collect a new sample, set a fresh \texttt{RUN\_NAME} in \path{main.py} and run \texttt{uv run python main.py} with a local credential. \path{prompt/prompt_a.py} holds the message templates.
+The analysis reads \path{output/results/milestone_2/players.jsonl} and \path{human_benchmark/processed/players.jsonl}. It writes the figures, CSVs and LaTeX tables in \path{output/analysis/milestone_2/}. To collect a new sample, set a fresh \texttt{RUN\_NAME} in \path{main.py} and run \texttt{uv run python main.py} with a local credential. The runner loads templates from \path{prompt/prompt_a.py} and the condition names and computer allocations from \path{simulation/instances.json}. It saves one JSON record per finished conversation. \texttt{uv run python -m analysis.replay\_m2} replays every saved conversation without API calls and recounts the replies.
 
 {\small\head{Sources.} Andreoni, J., D. Aydin, B. Barton, B. D. Bernheim and J. Naecker (2020). When Fair Isn’t Fair: Understanding Choice Reversals Involving Social Preferences. \textit{Journal of Political Economy}, 128(5), 1673--1711. \href{https://doi.org/10.1086/705549}{doi:10.1086/705549}. \href{https://www.journals.uchicago.edu/doi/suppl/10.1086/705549/suppl_file/2016200data.zip}{Journal replication archive}. \href{https://github.com/leona5139/choice_reversals}{Group 4 project repository}.}
 
 \newpage
 {\small IST 597-005\quad Group 4\quad Milestone 2}\par
 \titleline{Appendix B. Results by model setting}
-The heatmap shows which conditions account for each model’s overall distance. In rounds 1--4, Haiku with reasoning off was closer to the human distribution in 4P (TVD 0.42) than in 4A (0.92). The connected markers show the direction of the change in 5/5 share, which the distance alone cannot show. In the human 4A condition, 97 of 142 eligible allocations changed (68.3\%), matching the published rate.
+We use TVD because the paper reports choices as shares of five categories. TVD stays finite when a model gives zero share to a category observed in humans; unsmoothed cross entropy from human to model shares would be infinite. The heatmap shows which conditions account for each model’s overall distance. In rounds 1--4, Haiku with reasoning off was closer to the human distribution in 4P (TVD 0.42) than in 4A (0.92). The connected markers show the direction of the change in 5/5 share, which the distance alone cannot show. In the human 4A condition, 97 of 142 eligible allocations changed (68.3\%), matching the published rate.
 
-{\centering\includegraphics[width=\linewidth,height=.43\textheight,keepaspectratio]{\analysispath/06_tvd_6_blocks.png}\par}
+{\centering\includegraphics[width=\linewidth,height=.39\textheight,keepaspectratio]{\analysispath/06_tvd_6_blocks.png}\par}
 \vspace{2pt}
-{\centering\includegraphics[width=\linewidth,height=.39\textheight,keepaspectratio]{\analysispath/08_5_5_framing_and_revisions.png}\par}
+{\centering\includegraphics[width=\linewidth,height=.35\textheight,keepaspectratio]{\analysispath/08_5_5_framing_and_revisions.png}\par}
 \vspace{1pt}
 
 \newpage
@@ -77,6 +77,12 @@ Here the mean TVD gives equal weight to rounds 1--2, 3--4 and 5--8 in each of th
 \input{\analysispath/09_summary_12_blocks.tex}\par}
 
 \medskip
-{\centering\includegraphics[width=\linewidth]{\analysispath/06_tvd_12_blocks.png}\par}
+{\centering\includegraphics[width=\linewidth,height=.32\textheight,keepaspectratio]{\analysispath/06_tvd_12_blocks.png}\par}
+
+\head{Feedback timing.} In A rounds, the runner reports the winning ticket group before the next decision. The human sessions postponed those reveals until after round 4. A later check can vary this timing while holding the other prompts fixed.
+
+\head{Ranking.} The setting with the lowest mean TVD changes with the block definition. Under six blocks, three settings lie within 0.010 of DeepSeek at high reasoning, and under twelve the two lowest differ by 0.002, so we avoid claiming a stable ranking of the leading settings.
+
+\head{Direction of changes.} With reasoning off, 32 of GPT-6 Luna's 43 changes left 5/5, against 6 of 315 human changes. All 102 Gemma changes with reasoning on ended at 5/5. Pooling the four human conditions gives 315 changes in 478 offers (65.9\%), with 243 ending at 5/5.
 
 \end{document}
